@@ -89,7 +89,7 @@
       "id": 6,
       "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "text": {}, "textMode": "auto"},
       "pluginVersion": "8.0.0",
-      "targets": [{"expr": "tempo_processamento_unidade_segundos | avg", "refId": "A"}],
+      "targets": [{"expr": "tempo_processamento_unidade_segundos_sum / tempo_processamento_unidade_segundos_count", "refId": "A"}],
       "title": "📊 Tempo Médio/Contrato",
       "type": "stat"
     },
@@ -180,6 +180,56 @@
       ],
       "title": "🔁 Tentativas de API (Retries)",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {"mode": "thresholds"},
+          "custom": {"align": "auto", "displayMode": "auto", "inspect": false},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]},
+          "unit": "short"
+        },
+        "overrides": [
+          {"matcher": {"id": "byName", "options": "Time"}, "properties": [{"id": "custom.hidden", "value": true}]}
+        ]
+      },
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 19},
+      "id": 11,
+      "options": {"footer": {"countRows": false, "fields": "", "reducer": ["sum"], "show": false}, "showHeader": true, "sortBy": [{"displayName": "Value", "desc": true}]},
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {"expr": "sum by (tipo, status_code) (api_requisicoes_total{status=\"erro\"})", "format": "table", "instant": true, "refId": "A"}
+      ],
+      "title": "❌ Erros por Tipo e Status Code",
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "tipo": 0,
+              "status_code": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "tipo": "Tipo",
+              "status_code": "Status Code",
+              "Value": "Quantidade"
+            }
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
   "schemaVersion": 27,
@@ -196,5 +246,5 @@
   "timezone": "browser",
   "title": "Robo Contratos - Monitoramento",
   "uid": "robo-contratos-monitoring",
-  "version": 1
+  "version": 2
 }
