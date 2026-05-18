@@ -105,12 +105,27 @@ Então: `docker-compose restart prometheus`
 
 ## 📊 Métricas Principais (Robo Contratos)
 
+### Contadores
 ```
-contratos_processados_total{unidade="...",status="sucesso"}
-contratos_falha_total{unidade="..."}
-tempo_processamento_unidade_segundos
-tempo_api_post_segundos
-threads_ativas
+contratos_processados_total{unidade="..."}          # Total de contratos processados
+contratos_falha_total{unidade="...",tipo_erro="..."} # Total de falhas por tipo
+api_requisicoes_total{tipo="...",status="..."}      # Requisições API (tipo: contrato/historico/empenho/fatura/fiscal)
+api_tentativas_total{tipo="..."}                    # Tentativas incluindo retries
+dados_enviados_total{tipo="..."}                    # Quantidade de registros enviados
+```
+
+### Gauges
+```
+threads_ativas                      # Threads ativas agora
+unidades_processadas                # Unidades processadas com sucesso
+unidades_falhadas                   # Unidades com erro
+tempo_execucao_total_segundos       # Tempo total de execução
+```
+
+### Histogramas
+```
+tempo_processamento_unidade_segundos        # Distribuição de tempo por unidade
+tempo_api_post_segundos                     # Latência das requisições API
 ```
 
 ## 📈 Usar Grafana
@@ -146,20 +161,37 @@ Pronto! Você verá em tempo real:
 ## 📝 Queries Úteis (Prometheus)
 
 ```promql
-# Taxa de sucesso (%)
-rate(contratos_processados_total{status="sucesso"}[5m]) / rate(contratos_processados_total[5m]) * 100
+# Taxa de sucesso da API (%)
+sum(rate(api_requisicoes_total{status="sucesso"}[5m])) / sum(rate(api_requisicoes_total[5m])) * 100
 
-# Contratos por segundo
+# Requisições por tipo (últimas 5min)
+sum by (tipo) (rate(api_requisicoes_total[5m]))
+
+# Contratos processados por segundo
 rate(contratos_processados_total[1m])
 
-# Tempo médio (p95)
+# Tempo médio de processamento por unidade (p95)
 histogram_quantile(0.95, tempo_processamento_unidade_segundos_bucket)
 
 # Erros por minuto
 rate(contratos_falha_total[1m])
 
+# Latência API (p50, p95, p99)
+histogram_quantile(0.50, rate(tempo_api_post_segundos_bucket[5m]))  # mediana
+histogram_quantile(0.95, rate(tempo_api_post_segundos_bucket[5m]))  # 95º percentil
+histogram_quantile(0.99, rate(tempo_api_post_segundos_bucket[5m]))  # 99º percentil
+
+# Taxa de retry (tentativas vs requisições bem-sucedidas)
+sum(rate(api_tentativas_total[5m])) / sum(rate(api_requisicoes_total{status="sucesso"}[5m]))
+
+# Dados enviados por tipo (total)
+sum by (tipo) (dados_enviados_total)
+
 # Threads ativas agora
 threads_ativas
+
+# Taxa geral de sucesso de processamento
+unidades_processadas / (unidades_processadas + unidades_falhadas)
 ```
 
 Cole em http://localhost:9090/graph

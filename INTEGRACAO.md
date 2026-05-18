@@ -299,13 +299,28 @@ curl http://localhost:8000/metrics | grep contratos_processados_total
 
 ## Métricas Principais
 
+### Processamento de Contratos
+| Métrica | Tipo | Labels | Descrição |
+|---------|------|--------|-----------|
+| `contratos_processados_total` | Counter | `unidade` | Total de contratos processados por unidade |
+| `contratos_falha_total` | Counter | `unidade`, `tipo_erro` | Total de falhas por unidade e tipo de erro |
+
+### Requisições da API
+| Métrica | Tipo | Labels | Descrição |
+|---------|------|--------|-----------|
+| `api_requisicoes_total` | Counter | `tipo`, `status` | Requisições bem-sucedidas/falhadas (tipo: contrato/historico/empenho/fatura/fiscal) |
+| `api_tentativas_total` | Counter | `tipo` | Total de tentativas incluindo retries |
+| `dados_enviados_total` | Counter | `tipo` | Quantidade de registros enviados por tipo |
+| `tempo_api_post_segundos` | Histogram | - | Distribuição de latência nas requisições POST |
+
+### Execução
 | Métrica | Tipo | Descrição |
 |---------|------|-----------|
-| `contratos_processados_total` | Counter | Total de contratos processados |
-| `contratos_falha_total` | Counter | Total de falhas |
-| `api_requisicoes_total` | Counter | Requisições à API |
-| `tempo_processamento_contrato_segundos` | Histogram | Tempo por contrato |
-| `threads_ativas` | Gauge | Threads ativas |
+| `threads_ativas` | Gauge | Número de threads ativas no momento |
+| `unidades_processadas` | Gauge | Unidades processadas com sucesso |
+| `unidades_falhadas` | Gauge | Unidades com erro |
+| `tempo_execucao_total_segundos` | Gauge | Tempo total de execução |
+| `tempo_processamento_unidade_segundos` | Histogram | Distribuição de tempo por unidade |
 
 ## Performance
 
