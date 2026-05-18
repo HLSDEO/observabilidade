@@ -1,0 +1,54 @@
+# AlertManager Configuration
+global:
+  resolve_timeout: 5m
+  slack_api_url: ''  # Adicione sua Slack webhook URL aqui se desejar alertas no Slack
+
+# Configurar templates de notificação
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Definir a rota principal
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical'
+      continue: true
+    - match:
+        severity: warning
+      receiver: 'warning'
+
+# Definir receptores
+receivers:
+  - name: 'default'
+    # Webhook genérico - descomente e configure conforme necessário
+    # webhook_configs:
+    #   - url: 'http://localhost:5001/'
+
+  - name: 'critical'
+    # Slack para alertas críticos - descomente e configure
+    # slack_configs:
+    #   - channel: '#alerts-criticos'
+    #     title: 'Alerta Crítico'
+    #     text: '{{ .GroupLabels.SortedPairs.Values | join " " }}'
+
+  - name: 'warning'
+    # Slack para avisos - descomente e configure
+    # slack_configs:
+    #   - channel: '#alerts-avisos'
+    #     title: 'Aviso'
+    #     text: '{{ .GroupLabels.SortedPairs.Values | join " " }}'
+
+# Definir grupos de inibição (opcional)
+inhibit_rules:
+  # Não enviar aviso se houver um alerta crítico
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']
