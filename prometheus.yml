@@ -4,12 +4,7 @@ global:
   evaluation_interval: 15s     # Padrão: avaliar regras a cada 15 segundos
   external_labels:
     monitor: 'robo-contratos-monitor'
-
-# Alertmanager configuration (opcional)
-alerting:
-  alertmanagers:
-    - static_configs:
-        - targets: []
+    environment: 'production'
 
 # Carregar arquivos de regras uma vez e periodicamente re-avaliar
 rule_files:
@@ -38,12 +33,5 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets: ['node-exporter:9100']
-        labels:
-          group: 'infrastructure'
-
-  # Cadvisor (opcional - para métricas de container)
-  - job_name: 'cadvisor'
-    static_configs:
-      - targets: ['cadvisor:8080']
         labels:
           group: 'infrastructure'

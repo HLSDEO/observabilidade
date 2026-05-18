@@ -1,4 +1,4 @@
-{
+﻿{
   "annotations": {
     "list": [
       {
@@ -12,9 +12,10 @@
       }
     ]
   },
+  "description": "Dashboard de monitoramento completo do Robo Contratos Transparência",
   "editable": true,
   "gnetId": null,
-  "graphTooltip": 0,
+  "graphTooltip": 1,
   "id": null,
   "links": [],
   "panels": [
@@ -22,338 +23,141 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
+          "color": {"mode": "thresholds"},
           "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
+          "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]},
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "id": 1,
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "text": {}, "textMode": "auto"},
+      "pluginVersion": "8.0.0",
+      "targets": [{"expr": "contratos_processados_total{status=\"sucesso\"}", "refId": "A"}],
+      "title": "✅ Contratos Sucesso",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
       "id": 2,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "text": {}, "textMode": "auto"},
       "pluginVersion": "8.0.0",
-      "targets": [
-        {
-          "expr": "rate(contratos_processados_total[5m])",
-          "refId": "A"
-        }
-      ],
-      "title": "Taxa de Contratos Processados",
-      "type": "timeseries"
+      "targets": [{"expr": "contratos_falha_total", "refId": "A"}],
+      "title": "❌ Contratos Falha",
+      "type": "stat"
     },
     {
       "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "blue", "value": null}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
       "id": 3,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "text": {}, "textMode": "auto"},
       "pluginVersion": "8.0.0",
-      "targets": [
-        {
-          "expr": "tempo_processamento_unidade_segundos_bucket",
-          "refId": "A"
-        }
-      ],
-      "title": "Tempo de Processamento por Unidade",
+      "targets": [{"expr": "threads_ativas", "refId": "A"}],
+      "title": "🔄 Threads Ativas",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]}, "unit": "s"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "id": 4,
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "text": {}, "textMode": "auto"},
+      "pluginVersion": "8.0.0",
+      "targets": [{"expr": "tempo_execucao_total_segundos", "refId": "A"}],
+      "title": "⏱️ Tempo Total (segundos)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisLabel": "Contratos/segundo", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "opacity", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "auto", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}, "unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "id": 5,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "multi"}},
+      "pluginVersion": "8.0.0",
+      "targets": [{"expr": "rate(contratos_processados_total[5m])", "legendFormat": "{{status}}", "refId": "A"}],
+      "title": "📈 Taxa de Processamento (últimos 5min)",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 0,
-        "y": 8
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "text": {},
-        "textMode": "auto"
-      },
-      "pluginVersion": "8.0.0",
-      "targets": [
-        {
-          "expr": "contratos_processados_total{status=\"sucesso\"}",
-          "refId": "A"
-        }
-      ],
-      "title": "Total de Contratos com Sucesso",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 6,
-        "y": 8
-      },
-      "id": 5,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "text": {},
-        "textMode": "auto"
-      },
-      "pluginVersion": "8.0.0",
-      "targets": [
-        {
-          "expr": "contratos_falha_total",
-          "refId": "A"
-        }
-      ],
-      "title": "Total de Contratos com Falha",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 6,
-        "x": 12,
-        "y": 8
-      },
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisLabel": "Tempo (segundos)", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}, "unit": "s"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
       "id": 6,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "text": {},
-        "textMode": "auto"
-      },
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "single"}},
       "pluginVersion": "8.0.0",
-      "targets": [
-        {
-          "expr": "threads_ativas",
-          "refId": "A"
-        }
-      ],
-      "title": "Threads Ativas",
-      "type": "stat"
+      "targets": [{"expr": "tempo_processamento_unidade_segundos_bucket", "legendFormat": "{{le}}", "refId": "A"}],
+      "title": "🕐 Tempo de Processamento por Unidade",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "bars", "fillOpacity": 80, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 1, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "percent"}, "thresholdsStyle": {"mode": "off"}}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}, "unit": "short"}, "overrides": [{"matcher": {"id": "byName", "options": "sucesso"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "green"}}]}, {"matcher": {"id": "byName", "options": "erro"}, "properties": [{"id": "color", "value": {"mode": "fixed", "fixedColor": "red"}}]}]},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+      "id": 7,
+      "options": {"legend": {"calcs": ["sum"], "displayMode": "table", "placement": "right"}, "tooltip": {"mode": "single"}},
+      "pluginVersion": "8.0.0",
+      "targets": [{"expr": "sum by (status) (contratos_processados_total)", "legendFormat": "{{status}}", "refId": "A"}],
+      "title": "📊 Distribuição: Sucesso vs Erro",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisLabel": "Requisições/segundo", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 15, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}, "unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+      "id": 8,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "single"}},
+      "pluginVersion": "8.0.0",
+      "targets": [{"expr": "rate(api_requisicoes_total[5m])", "legendFormat": "{{endpoint}} - {{status}}", "refId": "A"}],
+      "title": "🌐 Taxa de Requisições API",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisLabel": "Tempo (ms)", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "opacity", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 2000}, {"color": "red", "value": 5000}]}, "unit": "ms"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20},
+      "id": 9,
+      "options": {"legend": {"calcs": ["mean", "max", "p95"], "displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "single"}},
+      "pluginVersion": "8.0.0",
+      "targets": [{"expr": "histogram_quantile(0.95, tempo_api_post_segundos_bucket) * 1000", "legendFormat": "p95", "refId": "A"}, {"expr": "histogram_quantile(0.50, tempo_api_post_segundos_bucket) * 1000", "legendFormat": "p50", "refId": "B"}],
+      "title": "⚡ Latência API (p95 e p50)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "custom": {"axisLabel": "Tempo (segundos)", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "opacity", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "linear", "lineWidth": 2, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "never", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}}, "mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}]}, "unit": "s"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20},
+      "id": 10,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom"}, "tooltip": {"mode": "single"}},
+      "pluginVersion": "8.0.0",
+      "targets": [{"expr": "tempo_extracao_dados_segundos_bucket", "legendFormat": "{{le}}", "refId": "A"}],
+      "title": "📝 Tempo de Extração de Dados",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {"defaults": {"mappings": [{"options": {"0": {"color": "red", "text": "Down"}, "1": {"color": "green", "text": "Up"}}, "type": "value"}], "color": {"mode": "palette-classic"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 1}, {"color": "green", "value": 2}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 24, "x": 0, "y": 28},
+      "id": 11,
+      "options": {"showHeader": true, "sortBy": []},
+      "pluginVersion": "8.0.0",
+      "targets": [{"expr": "label_replace(up{job=\"robo-contratos\"}, \"instance_name\", \"Robo Contratos\", \"\", \"\")", "format": "table", "instant": true, "refId": "A"}],
+      "transformations": [{"id": "organize", "options": {"excludeByName": {"Time": true, "__name__": true, "job": true}, "indexByName": {"instance_name": 0, "up": 1}, "renameByName": {"instance_name": "Serviço", "up": "Status"}}}],
+      "title": "🔍 Status dos Serviços",
+      "type": "table"
     }
   ],
   "schemaVersion": 27,
   "style": "dark",
-  "tags": [
-    "robo-contratos",
-    "transparencia"
-  ],
-  "templating": {
-    "list": []
-  },
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "timepicker": {},
-  "timezone": "",
-  "title": "Robo Contratos - Monitoramento",
+  "tags": ["robo-contratos", "transparencia", "monitoramento"],
+  "templating": {"list": []},
+  "time": {"from": "now-24h", "to": "now"},
+  "timepicker": {"refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h"]},
+  "timezone": "browser",
+  "title": "🤖 Robo Contratos - Monitoramento Completo",
   "uid": "robo-contratos",
-  "version": 0
+  "version": 2
 }
