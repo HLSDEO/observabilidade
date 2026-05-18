@@ -16,7 +16,7 @@ Guia completo para integrar o **Robo Contratos Transparência** com o **Stack de
 ┌─────────────────────────────────────────────────────────┐
 │    Prometheus (porta 9090)                              │
 │  ├─ Coleta métricas a cada 30s                         │
-│  ├─ Armazena em time series (30 dias)                  │
+│  ├─ Armazena em time series (2 anos)                   │
 │  └─ Fornece dados para Grafana                         │
 └─────────────┬───────────────────────────────────────────┘
               │ HTTP queries
@@ -24,8 +24,7 @@ Guia completo para integrar o **Robo Contratos Transparência** com o **Stack de
 ┌─────────────────────────────────────────────────────────┐
 │    Grafana (porta 3000)                                 │
 │  ├─ Visualiza dashboards                               │
-│  ├─ Cria alertas                                       │
-│  └─ Integra com Slack/PagerDuty                        │
+│  └─ Monitora métricas em tempo real                    │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -308,38 +307,14 @@ curl http://localhost:8000/metrics | grep contratos_processados_total
 | `tempo_processamento_contrato_segundos` | Histogram | Tempo por contrato |
 | `threads_ativas` | Gauge | Threads ativas |
 
-## Alertas Úteis
-
-### Criar alerta de erro de API
-
-Em Prometheus (prometheus.yml):
-
-```yaml
-rule_files:
-  - 'alerts.yml'
-```
-
-Em `alerts.yml`:
-
-```yaml
-groups:
-  - name: robo_contratos
-    rules:
-      - alert: AltoTaxaErroAPI
-        expr: rate(api_requisicoes_total{status="erro"}[5m]) > 0.1
-        for: 5m
-        annotations:
-          summary: "Taxa de erro de API acima de 10%"
-```
-
 ## Performance
 
 ### Recomendações
 
 - **Threads**: 4-6 (ajuste em config/parametros.py)
 - **Prometheus scrape**: 30s (ajuste em prometheus.yml)
-- **Retenção Prometheus**: 30 dias (padrão)
-- **RAM Prometheus**: ~1-2GB
+- **Retenção Prometheus**: 2 anos (730 dias)
+- **RAM Prometheus**: ~4GB
 - **RAM Grafana**: ~512MB
 - **RAM Robo Contratos**: ~2-4GB (4 threads)
 
@@ -377,14 +352,12 @@ tar -czf robo-contratos-backup.tar.gz ~/projetos/robo_contratos_transparencia/fi
 
 1. **Certificados SSL**: Nginx reverse proxy com Let's Encrypt
 2. **Autenticação**: OAuth2 no Grafana
-3. **Alertas**: Slack, PagerDuty ou Email
-4. **Backup**: Automático diário para S3/NAS
-5. **Monitoramento**: Alertas de down-time
-6. **Logs**: Centralizados (ELK/Loki)
+3. **Backup**: Automático diário para S3/NAS
+4. **Monitoramento**: Dashboards em tempo real
+5. **Logs**: Centralizados (ELK/Loki)
 
 ## Próximos Passos
 
-- [ ] Configurar alertas no Slack
 - [ ] Customizar dashboard Grafana
 - [ ] Adicionar mais métricas (CPU, memória, I/O)
 - [ ] Setup de backup automático

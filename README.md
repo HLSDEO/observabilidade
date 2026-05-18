@@ -1,6 +1,6 @@
 ﻿# 📊 Stack de Observabilidade - Prometheus + Grafana
 
-Stack completo de monitoramento para **Robo Contratos Transparência** e aplicações em geral. Inclui Prometheus, Grafana, AlertManager, Node Exporter e cAdvisor em um docker-compose pronto para produção.
+Stack completo de monitoramento para **Robo Contratos Transparência** e aplicações em geral. Inclui Prometheus, Grafana e Node Exporter em um docker-compose pronto para produção.
 
 ## 🎯 O que é
 
@@ -9,7 +9,7 @@ Stack completo de monitoramento para **Robo Contratos Transparência** e aplica�
 - 📝 **Logs** (eventos): o que aconteceu e quando
 - 🔍 **Traces** (fluxos): seguir uma requisição pelo sistema
 
-Este stack fornece **métricas + alertas + dashboards**.
+Este stack fornece **métricas + dashboards**.
 
 ## 🏗️ Arquitetura
 
@@ -25,7 +25,7 @@ Este stack fornece **métricas + alertas + dashboards**.
 │    Prometheus            │
 │    :9090                 │
 │  - Scrape & store        │
-│  - 30 dias retention     │
+│  - 2 anos retention      │
 └─────────┬────────────────┘
           │ time series queries
           ↓
@@ -33,14 +33,7 @@ Este stack fornece **métricas + alertas + dashboards**.
 │     Grafana              │
 │     :3000                │
 │  - Dashboards            │
-│  - Alertas               │
-└──────────────────────────┘
-          │ webhooks
-          ↓
-┌──────────────────────────┐
-│   AlertManager           │
-│   :9093                  │
-│  - Slack, Email, etc     │
+│  - Visualização          │
 └──────────────────────────┘
 ```
 
@@ -65,7 +58,6 @@ docker-compose ps
 |---------|-----|-------------|
 | **Grafana** | http://localhost:3000 | admin / admin |
 | **Prometheus** | http://localhost:9090 | - |
-| **AlertManager** | http://localhost:9093 | - |
 | **Node Exporter** | http://localhost:9100 | - |
 
 ### 3. Conectar Robo Contratos
@@ -82,13 +74,11 @@ Prometheus scrapeará automaticamente `http://robo-contratos:8000/metrics`.
 
 | Serviço | Porta | CPU | RAM | Descrição |
 |---------|-------|-----|-----|-----------|
-| **Prometheus** | 9090 | 0.5 | 1GB | Armazena métricas time-series |
+| **Prometheus** | 9090 | 0.5 | 4GB | Armazena métricas time-series (2 anos) |
 | **Grafana** | 3000 | 0.2 | 512MB | Visualização e dashboards |
-| **AlertManager** | 9093 | 0.1 | 128MB | Gerenciamento de alertas |
 | **Node Exporter** | 9100 | 0.1 | 50MB | Métricas do SO |
-| **cAdvisor** | 8080 | 0.2 | 256MB | Métricas de containers |
 
-**Total:** ~1GB RAM, ~1.1 CPU (em repouso)
+**Total:** ~4.5GB RAM, ~0.8 CPU (em repouso)
 
 ## ⚙️ Configuração
 
@@ -112,17 +102,6 @@ Editar `prometheus.yml`:
 ```
 
 Então: `docker-compose restart prometheus`
-
-### Alertas no Slack
-
-1. Criar Slack Webhook: https://api.slack.com/messaging/webhooks
-2. Editar `alertmanager.yml`:
-   ```yaml
-   global:
-     slack_api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
-   ```
-3. Descomentare configurar receivers de Slack
-4. Restart: `docker-compose restart alertmanager`
 
 ## 📊 Métricas Principais (Robo Contratos)
 
@@ -192,7 +171,6 @@ Ver logs em tempo real:
 ```bash
 docker-compose logs -f prometheus
 docker-compose logs -f grafana
-docker-compose logs -f alertmanager
 ```
 
 ## 🛠️ Troubleshooting
@@ -237,9 +215,8 @@ docker-compose up -d
 
 ```
 observabilidade/
-├── docker-compose.yml           # Serviços (Prometheus, Grafana, etc)
+├── docker-compose.yml           # Serviços (Prometheus, Grafana)
 ├── prometheus.yml               # Config Prometheus (scrape targets)
-├── alertmanager.yml             # Config AlertManager
 ├── grafana/
 │   ├── provisioning/
 │   │   ├── datasources/prometheus.yml    # Datasource auto
@@ -258,8 +235,7 @@ observabilidade/
 - [ ] **HTTPS** com Nginx reverse proxy
 - [ ] **Autenticação** (OAuth2 no Grafana)
 - [ ] **Backup** diário para S3/NAS
-- [ ] **Firewall** (porta 9090, 9093 apenas interna)
-- [ ] **Alertas** configurados (Slack/Email/PagerDuty)
+- [ ] **Firewall** (porta 9090 apenas interna)
 
 Veja [INTEGRACAO.md](INTEGRACAO.md) para instruções completas.
 
