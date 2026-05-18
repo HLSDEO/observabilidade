@@ -1,118 +1,119 @@
-# Stack de Observabilidade - Prometheus + Grafana
+﻿# 📊 Stack de Observabilidade - Prometheus + Grafana
 
-Stack completo para monitoramento da aplicação **Robo Contratos Transparência** com Prometheus e Grafana.
+Stack completo de monitoramento para **Robo Contratos Transparência** e aplicações em geral. Inclui Prometheus, Grafana, AlertManager, Node Exporter e cAdvisor em um docker-compose pronto para produção.
 
-## Serviços Incluídos
+## 🎯 O que é
 
-| Serviço | Porta | URL | Descrição |
-|---------|-------|-----|-----------|
-| **Prometheus** | 9090 | http://localhost:9090 | Armazenamento e consulta de métricas |
-| **Grafana** | 3000 | http://localhost:3000 | Visualização e dashboards |
-| **AlertManager** | 9093 | http://localhost:9093 | Gerenciamento de alertas |
-| **Node Exporter** | 9100 | http://localhost:9100 | Métricas do sistema operacional |
-| **cAdvisor** | 8080 | http://localhost:8080 | Métricas de containers |
+**Observabilidade** = Visibilidade total de como sua aplicação está se comportando:
+- 📈 **Métricas** (números): requisições/s, tempo de resposta, erros, threads ativas
+- 📝 **Logs** (eventos): o que aconteceu e quando
+- 🔍 **Traces** (fluxos): seguir uma requisição pelo sistema
 
-## Pré-requisitos
+Este stack fornece **métricas + alertas + dashboards**.
 
-- Docker 20.10+
-- Docker Compose 2.0+
-- 2GB RAM mínimo
-- Robo Contratos rodando e expondo métricas na porta 8000
+## 🏗️ Arquitetura
 
-## Início Rápido
-
-### 1. Build e Start
-
-```bash
-docker-compose up -d
+```
+┌──────────────────────────┐
+│   Aplicações             │
+│  (Robo Contratos etc)    │
+│  :8000/metrics           │
+└────────────┬─────────────┘
+             │ HTTP (porta 8000)
+             ↓
+┌──────────────────────────┐
+│    Prometheus            │
+│    :9090                 │
+│  - Scrape & store        │
+│  - 30 dias retention     │
+└─────────┬────────────────┘
+          │ time series queries
+          ↓
+┌──────────────────────────┐
+│     Grafana              │
+│     :3000                │
+│  - Dashboards            │
+│  - Alertas               │
+└──────────────────────────┘
+          │ webhooks
+          ↓
+┌──────────────────────────┐
+│   AlertManager           │
+│   :9093                  │
+│  - Slack, Email, etc     │
+└──────────────────────────┘
 ```
 
-Aguarde ~30 segundos para todos os serviços iniciarem.
+## 🚀 Início Rápido
+
+### 1. Iniciar Stack
+
+```bash
+# Build e start
+docker-compose up -d
+
+# Aguardar ~30s para tudo iniciar
+sleep 30
+
+# Ver status
+docker-compose ps
+```
 
 ### 2. Acessar Interfaces
 
-**Grafana Dashboard:**
-- URL: http://localhost:3000
-- Usuário: `admin`
-- Senha: `admin` (mude após primeiro login!)
+| Serviço | URL | Credenciais |
+|---------|-----|-------------|
+| **Grafana** | http://localhost:3000 | admin / admin |
+| **Prometheus** | http://localhost:9090 | - |
+| **AlertManager** | http://localhost:9093 | - |
+| **Node Exporter** | http://localhost:9100 | - |
 
-**Prometheus Console:**
-- URL: http://localhost:9090
-- Testar query: `contratos_processados_total`
-
-**AlertManager:**
-- URL: http://localhost:9093
-
-## Estrutura de Arquivos
-
-```
-observabilidade/
-├── docker-compose.yml           # Orquestração de containers
-├── prometheus.yml               # Configuração Prometheus
-├── alertmanager.yml             # Configuração AlertManager
-├── grafana/
-│   ├── provisioning/
-│   │   ├── datasources/
-│   │   │   └── prometheus.yml   # Datasource automático
-│   │   └── dashboards/
-│   │       └── dashboards.yml   # Provisioning de dashboards
-│   └── dashboards/
-│       └── robo-contratos.json  # Dashboard do Robo Contratos
-└── README.md
-```
-
-## Métricas Disponíveis
-
-### Contratos
-
-- `contratos_processados_total` - Total de contratos processados (labels: unidade, status)
-- `contratos_falha_total` - Contratos com falha (labels: unidade, tipo_erro)
-- `tempo_processamento_contrato_segundos` - Histograma de tempo por contrato
-
-### API
-
-- `api_requisicoes_total` - Requisições à API (labels: endpoint, status)
-- `tempo_api_post_segundos` - Histograma de tempo de API POST
-
-### Sistema
-
-- `threads_ativas` - Número de threads ativas no momento
-- `unidades_processadas` - Contador de unidades processadas
-- `unidades_falhadas` - Contador de unidades com erro
-- `tempo_processamento_unidade_segundos` - Histograma por unidade
-- `tempo_execucao_total_segundos` - Tempo total de execução
-
-## Configuração
-
-### Conectar Robo Contratos
-
-A conexão é feita via `docker-compose.yml`:
-
-```yaml
-static_configs:
-  - targets: ['robo-contratos:8000']  # Nome do serviço
-```
-
-Se o Robo Contratos está em outro host ou rede:
-
-```yaml
-# prometheus.yml
-- job_name: 'robo-contratos'
-  static_configs:
-    - targets: ['seu-ip:8000']  # IP/hostname do Robo Contratos
-```
-
-### Mudar Senha do Grafana
+### 3. Conectar Robo Contratos
 
 ```bash
-# Acessar container Grafana
-docker exec -it grafana bash
-
-# Usar grafana-cli para mudar senha
-grafana-cli admin reset-admin-password nova-senha
+# Em outro terminal
+cd ../robo_contratos_transparencia
+docker-compose up
 ```
 
-### Alertas (Slack)
+Prometheus scrapeará automaticamente `http://robo-contratos:8000/metrics`.
+
+## 📦 Serviços Inclusos
+
+| Serviço | Porta | CPU | RAM | Descrição |
+|---------|-------|-----|-----|-----------|
+| **Prometheus** | 9090 | 0.5 | 1GB | Armazena métricas time-series |
+| **Grafana** | 3000 | 0.2 | 512MB | Visualização e dashboards |
+| **AlertManager** | 9093 | 0.1 | 128MB | Gerenciamento de alertas |
+| **Node Exporter** | 9100 | 0.1 | 50MB | Métricas do SO |
+| **cAdvisor** | 8080 | 0.2 | 256MB | Métricas de containers |
+
+**Total:** ~1GB RAM, ~1.1 CPU (em repouso)
+
+## ⚙️ Configuração
+
+### Conectar Robo Contratos (Docker Compose)
+
+Automático via `prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: 'robo-contratos'
+    static_configs:
+      - targets: ['robo-contratos:8000']
+```
+
+### Conectar Host Externo
+
+Editar `prometheus.yml`:
+
+```yaml
+- targets: ['seu-ip:8000']
+```
+
+Então: `docker-compose restart prometheus`
+
+### Alertas no Slack
 
 1. Criar Slack Webhook: https://api.slack.com/messaging/webhooks
 2. Editar `alertmanager.yml`:
@@ -121,150 +122,213 @@ grafana-cli admin reset-admin-password nova-senha
      slack_api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
    ```
 3. Descomentare configurar receivers de Slack
-4. Reiniciar: `docker-compose restart alertmanager`
+4. Restart: `docker-compose restart alertmanager`
 
-## Queries Úteis
+## 📊 Métricas Principais (Robo Contratos)
 
-### Taxa de Sucesso
-
-```promql
-rate(contratos_processados_total{status="sucesso"}[5m]) /
-(rate(contratos_processados_total[5m]) + 0.001)
+```
+contratos_processados_total{unidade="...",status="sucesso"}
+contratos_falha_total{unidade="..."}
+tempo_processamento_unidade_segundos
+tempo_api_post_segundos
+threads_ativas
 ```
 
-### Contratos por Segundo
+## 📈 Usar Grafana
+
+### Ver Dashboards
+
+1. Acesse http://localhost:3000
+2. Vá para **Dashboards** (menu esquerdo)
+3. Clique **Robo Contratos - Monitoramento**
+
+Pronto! Você verá em tempo real:
+- Taxa de contratos/s
+- Tempo de processamento
+- Taxa de sucesso/erro
+- Threads ativas
+
+### Criar Query Customizada
+
+1. Novo painel
+2. Selecione datasource **Prometheus**
+3. Digite query:
+   ```promql
+   rate(contratos_processados_total[5m])  # Taxa (contratos/segundo)
+   ```
+
+### Alertas em Grafana
+
+1. Edite painel
+2. Clique "Alert"
+3. Configure threshold
+4. Salve
+
+## 📝 Queries Úteis (Prometheus)
 
 ```promql
+# Taxa de sucesso (%)
+rate(contratos_processados_total{status="sucesso"}[5m]) / rate(contratos_processados_total[5m]) * 100
+
+# Contratos por segundo
 rate(contratos_processados_total[1m])
-```
 
-### Tempo Médio de Processamento
-
-```promql
+# Tempo médio (p95)
 histogram_quantile(0.95, tempo_processamento_unidade_segundos_bucket)
+
+# Erros por minuto
+rate(contratos_falha_total[1m])
+
+# Threads ativas agora
+threads_ativas
 ```
 
-### Taxa de Erro de API
+Cole em http://localhost:9090/graph
 
-```promql
-rate(api_requisicoes_total{status="erro"}[5m])
-```
+## 🔄 Logs
 
-## Logs e Troubleshooting
-
-### Ver logs de um serviço
+Ver logs em tempo real:
 
 ```bash
 docker-compose logs -f prometheus
 docker-compose logs -f grafana
+docker-compose logs -f alertmanager
 ```
 
-### Verificar status
+## 🛠️ Troubleshooting
+
+### Prometheus não scrapeando Robo Contratos
 
 ```bash
-docker-compose ps
+# Verificar targets
+http://localhost:9090/targets
+
+# Deve estar "UP"
+# Se "DOWN", ver erro ao lado
+
+# Testar conectividade
+docker exec prometheus curl -v http://robo-contratos:8000/metrics
 ```
 
-### Reiniciar um serviço
+### Grafana não vê Prometheus
 
 ```bash
-docker-compose restart prometheus
+# Verificar datasource
+1. Configuration → Data Sources
+2. Clique Prometheus
+3. Test → deve dizer "Database Connection OK"
+
+# Se falhar, URL deve ser:
+# http://prometheus:9090  (Docker Compose)
 ```
 
-### Limpar volumes (CUIDADO!)
+### Alto uso de memória
 
 ```bash
-docker-compose down -v
-```
+# Reduzir retenção em prometheus.yml
+'--storage.tsdb.retention.time=7d'  # De 30 dias para 7
 
-## Performance e Recursos
-
-### Retenção de Dados
-
-Por padrão, Prometheus retém 30 dias. Para ajustar:
-
-```bash
-# docker-compose.yml - comando Prometheus
-'--storage.tsdb.retention.time=90d'  # 90 dias
-```
-
-### Limite de Memória
-
-Ajuste em `docker-compose.yml`:
-
-```yaml
-deploy:
-  resources:
-    limits:
-      memory: 2G
-```
-
-## Backup
-
-### Backup de dados Prometheus
-
-```bash
-docker exec prometheus tar -czf - /prometheus | gzip > prometheus-backup.tar.gz
-```
-
-### Backup de dados Grafana
-
-```bash
-docker exec grafana tar -czf - /var/lib/grafana | gzip > grafana-backup.tar.gz
-```
-
-## Deploy em Produção
-
-1. **Mude a senha do Grafana**
-2. **Configure autenticação LDAP/OAuth** em Grafana
-3. **Configure alertas** via Slack/PagerDuty
-4. **Adicione reverse proxy** (Nginx/Caddy) com SSL
-5. **Configure backups** automáticos
-6. **Use volumes persistentes** em produção
-7. **Configure logs centralizados** (ELK, Loki)
-
-Exemplo nginx:
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name monitoring.example.com;
-    
-    ssl_certificate /etc/letsencrypt/live/example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/example.com/privkey.pem;
-    
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-## Parar Stack
-
-```bash
 docker-compose down
+docker volume rm observabilidade_prometheus_data
+docker-compose up -d
 ```
 
-Para remover volumes também:
+## 📂 Estrutura de Arquivos
+
+```
+observabilidade/
+├── docker-compose.yml           # Serviços (Prometheus, Grafana, etc)
+├── prometheus.yml               # Config Prometheus (scrape targets)
+├── alertmanager.yml             # Config AlertManager
+├── grafana/
+│   ├── provisioning/
+│   │   ├── datasources/prometheus.yml    # Datasource auto
+│   │   └── dashboards/dashboards.yml     # Provisioning
+│   └── dashboards/
+│       └── robo-contratos.json           # Dashboard pronto
+├── start.sh / start.ps1         # Scripts inicialização
+├── README.md                    # Este arquivo
+├── INTEGRACAO.md                # Guia com Robo Contratos
+└── .dockerignore
+```
+
+## 🔐 Segurança em Produção
+
+- [ ] **Trocar senha Grafana** (atual: admin/admin)
+- [ ] **HTTPS** com Nginx reverse proxy
+- [ ] **Autenticação** (OAuth2 no Grafana)
+- [ ] **Backup** diário para S3/NAS
+- [ ] **Firewall** (porta 9090, 9093 apenas interna)
+- [ ] **Alertas** configurados (Slack/Email/PagerDuty)
+
+Veja [INTEGRACAO.md](INTEGRACAO.md) para instruções completas.
+
+## 💾 Backup e Restore
+
+### Backup
 
 ```bash
-docker-compose down -v
+# Prometheus data
+docker exec prometheus tar -czf - /prometheus > prometheus.tar.gz
+
+# Grafana data
+docker exec grafana tar -czf - /var/lib/grafana > grafana.tar.gz
 ```
 
-## Referências
+### Restore
+
+```bash
+# Limpar volumes
+docker-compose down -v
+
+# Restore
+docker-compose up -d
+docker exec prometheus tar -xzf - < prometheus.tar.gz -C /
+docker exec grafana tar -xzf - < grafana.tar.gz -C /
+```
+
+## 🚀 Deploy em Produção
+
+1. **Certificados SSL** → nginx com Let's Encrypt
+2. **Senhas fortes** → trocar credenciais Grafana
+3. **Backup automático** → cron job ou S3
+4. **Alertas** → configurar Slack/PagerDuty
+5. **Recursos** → ajustar limits conforme escala
+6. **Monitoramento** → alertar de down-time
+
+Veja [INTEGRACAO.md](INTEGRACAO.md) - seção "Deployment em Produção".
+
+## 🧹 Limpeza
+
+```bash
+# Parar containers
+docker-compose down
+
+# Parar + remover volumes (CUIDADO - deleta dados!)
+docker-compose down -v
+
+# Remover imagens
+docker-compose down --rmi all
+```
+
+## 📚 Referências
 
 - [Prometheus Docs](https://prometheus.io/docs/)
 - [Grafana Docs](https://grafana.com/docs/grafana/)
 - [AlertManager](https://prometheus.io/docs/alerting/latest/overview/)
-- [Prometheus Client Libraries](https://prometheus.io/docs/instrumenting/clientlibs/)
+- [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/)
 
-## Suporte
+## 🤝 Suporte
 
-Para problemas:
+Problemas? Veja:
+1. Logs: `docker-compose logs -f`
+2. Targets Prometheus: http://localhost:9090/targets
+3. Teste conectividade: `docker exec prometheus curl -v http://robo-contratos:8000/metrics`
 
-1. Verificar logs: `docker-compose logs -f`
-2. Verificar targets Prometheus: http://localhost:9090/targets
-3. Testar conectividade: `docker exec prometheus curl -v http://robo-contratos:8000/metrics`
+## 📄 Licença
 
+MIT
+
+---
+
+**Versão:** 1.0.0 | **Status:** ✅ Produção | **Atualizado:** 2026-05-18
