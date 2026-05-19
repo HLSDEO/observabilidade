@@ -16,6 +16,8 @@ services:
     environment:
       - TZ=America/Sao_Paulo
     restart: unless-stopped
+    networks:
+      - default
     deploy:
       resources:
         limits:
