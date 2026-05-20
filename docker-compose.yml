@@ -46,6 +46,8 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/etc/grafana/dashboards:ro
+      - ./grafana/pages:/etc/grafana/pages:ro
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini:ro
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_SECURITY_ADMIN_USER=admin
@@ -67,6 +69,42 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Portainer - Gerenciar Docker containers
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: unless-stopped
+    environment:
+      - TZ=America/Sao_Paulo
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Crontab-UI - Gerenciar jobs cron
+  crontab-ui:
+    image: alseambusher/crontab-ui:latest
+    container_name: crontab-ui
+    ports:
+      - "5000:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - TZ=America/Sao_Paulo
+      - CRON_PATH=/var/spool/cron/crontabs
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # Node Exporter (opcional - coleta métricas do sistema)
   node-exporter:
@@ -94,6 +132,8 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  portainer_data:
     driver: local
 
 networks:

@@ -1,0 +1,38 @@
+{
+  "id": 1,
+  "uid": "portainer-page",
+  "title": "Portainer - Docker Management",
+  "description": "Gerenciar containers Docker",
+  "tags": ["portainer", "docker"],
+  "timezone": "browser",
+  "schemaVersion": 27,
+  "version": 1,
+  "refresh": "",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "panels": [
+    {
+      "type": "iframe",
+      "id": 1,
+      "title": "Portainer",
+      "gridPos": {
+        "h": 24,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "url": "http://portainer:9000",
+        "transparent": false,
+        "showBorder": false
+      }
+    }
+  ]
+}

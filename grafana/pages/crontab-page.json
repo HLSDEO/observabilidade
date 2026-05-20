@@ -1,0 +1,38 @@
+{
+  "id": 2,
+  "uid": "crontab-page",
+  "title": "Crontab-UI - Cron Jobs Management",
+  "description": "Gerenciar jobs cron",
+  "tags": ["crontab", "jobs"],
+  "timezone": "browser",
+  "schemaVersion": 27,
+  "version": 1,
+  "refresh": "",
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "panels": [
+    {
+      "type": "iframe",
+      "id": 1,
+      "title": "Crontab-UI",
+      "gridPos": {
+        "h": 24,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "url": "http://crontab-ui:8000",
+        "transparent": false,
+        "showBorder": false
+      }
+    }
+  ]
+}
