@@ -34,7 +34,7 @@
       "id": 1,
       "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "text": {}, "textMode": "auto"},
       "pluginVersion": "8.0.0",
-      "targets": [{"expr": "sum(contratos_processados_total)", "refId": "A"}],
+      "targets": [{"expr": "contratos_processados_geral_total", "refId": "A"}],
       "title": "✅ Total Contratos",
       "type": "stat"
     },
@@ -89,7 +89,7 @@
       "id": 6,
       "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"values": false, "calcs": ["lastNotNull"], "fields": ""}, "text": {}, "textMode": "auto"},
       "pluginVersion": "8.0.0",
-      "targets": [{"expr": "tempo_processamento_unidade_segundos_sum / tempo_processamento_unidade_segundos_count", "refId": "A"}],
+      "targets": [{"expr": "rate(tempo_processamento_contrato_geral_sum[5m]) / rate(tempo_processamento_contrato_geral_count[5m])", "refId": "A"}],
       "title": "📊 Tempo Médio/Contrato",
       "type": "stat"
     },
@@ -185,6 +185,28 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {"mode": "palette-classic"},
+          "custom": {"axisLabel": "Segundos", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 10, "gradientMode": "none", "hideFrom": {"tooltip": false, "viz": false, "legend": false}, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": {"type": "linear"}, "showPoints": "auto", "spanNulls": false, "stacking": {"group": "A", "mode": "none"}, "thresholdsStyle": {"mode": "off"}},
+          "mappings": [],
+          "thresholds": {"mode": "absolute", "steps": [{"color": "cyan", "value": null}]},
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 19},
+      "id": 12,
+      "options": {"legend": {"calcs": ["mean", "max"], "displayMode": "table", "placement": "right", "showLegend": true}, "tooltip": {"mode": "multi"}},
+      "pluginVersion": "8.0.0",
+      "targets": [
+        {"expr": "rate(tempo_processamento_contrato_geral_sum[5m]) / rate(tempo_processamento_contrato_geral_count[5m])", "legendFormat": "Tempo Médio", "refId": "A"}
+      ],
+      "title": "📈 Tempo Médio/Contrato (Evolução)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "color": {"mode": "thresholds"},
           "custom": {"align": "auto", "displayMode": "auto", "inspect": false},
           "mappings": [],
@@ -195,7 +217,7 @@
           {"matcher": {"id": "byName", "options": "Time"}, "properties": [{"id": "custom.hidden", "value": true}]}
         ]
       },
-      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 19},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 19},
       "id": 11,
       "options": {"footer": {"countRows": false, "fields": "", "reducer": ["sum"], "show": false}, "showHeader": true, "sortBy": [{"displayName": "Value", "desc": true}]},
       "pluginVersion": "8.0.0",
