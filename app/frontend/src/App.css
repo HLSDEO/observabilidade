@@ -792,6 +792,16 @@ tr:last-child td {
   gap: 8px;
 }
 
+/* ---------------- Refresh meta ---------------- */
+.refresh-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 /* ---------------- Card editor ---------------- */
 .card-edit {
   background: var(--bg3);

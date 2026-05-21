@@ -1,11 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { dashboardService, queryService } from '../services/api';
 import ChartRenderer from '../components/ChartRenderer';
 import DetailModal from '../components/DetailModal';
-import { subHours, subDays } from 'date-fns';
+import { subMinutes, subHours, subDays } from 'date-fns';
 
 const KPI_TONES = ['accent', 'red', 'green', 'yellow', 'purple', 'blue'];
+
+const TIME_RANGES = [
+  { value: '5m', label: 'Últimos 5 minutos' },
+  { value: '1h', label: 'Última 1 hora' },
+  { value: '4h', label: 'Últimas 4 horas' },
+  { value: '24h', label: 'Últimas 24 horas' },
+  { value: '7d', label: 'Últimos 7 dias' },
+  { value: '30d', label: 'Últimos 30 dias' },
+  { value: 'custom', label: 'Personalizado' },
+];
 
 export default function DashboardViewer() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +29,11 @@ export default function DashboardViewer() {
   const [customDateTo, setCustomDateTo] = useState('');
   const [selectedModal, setSelectedModal] = useState<any>(null);
   const [modalData, setModalData] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // Mantém sempre a versão mais recente de loadCardData para o setInterval
+  const loadRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     loadDashboard();
@@ -26,14 +41,11 @@ export default function DashboardViewer() {
   }, [id]);
 
   useEffect(() => {
-    if (dashboard) {
-      loadCardData();
-      const interval = setInterval(
-        loadCardData,
-        (dashboard.config?.refreshInterval || 30) * 1000
-      );
-      return () => clearInterval(interval);
-    }
+    if (!dashboard) return;
+    loadRef.current();
+    const ms = (dashboard.config?.refreshInterval || 30) * 1000;
+    const interval = setInterval(() => loadRef.current(), ms);
+    return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboard, timeRange, customDateFrom, customDateTo]);
 
@@ -57,6 +69,15 @@ export default function DashboardViewer() {
     let to = now;
 
     switch (timeRange) {
+      case '5m':
+        from = subMinutes(now, 5);
+        break;
+      case '1h':
+        from = subHours(now, 1);
+        break;
+      case '4h':
+        from = subHours(now, 4);
+        break;
       case '24h':
         from = subHours(now, 24);
         break;
@@ -83,18 +104,25 @@ export default function DashboardViewer() {
     const newCardData: { [key: string]: any } = {};
 
     try {
+      setRefreshing(true);
       for (const card of dashboard.config.cards) {
         const query = { ...card.query, fr: from, to };
         const response = await queryService.aggregate(query);
         newCardData[card.id] = response.data;
       }
       setCardData(newCardData);
+      setLastUpdated(new Date());
       setError(null);
     } catch (err) {
       setError('Erro ao carregar dados dos gráficos');
       console.error(err);
+    } finally {
+      setRefreshing(false);
     }
   };
+
+  // Mantém o ref apontando para a versão atual (com o timeRange corrente)
+  loadRef.current = loadCardData;
 
   const handleChartClick = async (cardConfig: any, clickValue: any) => {
     try {
@@ -165,16 +193,21 @@ export default function DashboardViewer() {
             <div className="field">
               <label>Período</label>
               <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
-                <option value="24h">Últimas 24h</option>
-                <option value="7d">Últimos 7 dias</option>
-                <option value="30d">Últimos 30 dias</option>
-                <option value="custom">Personalizado</option>
+                {TIME_RANGES.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="field">
               <label>&nbsp;</label>
-              <button className="button secondary" onClick={loadCardData}>
-                ↻ Atualizar
+              <button
+                className="button secondary"
+                onClick={loadCardData}
+                disabled={refreshing}
+              >
+                {refreshing ? '↻ Atualizando...' : '↻ Atualizar'}
               </button>
             </div>
             <div className="field">
@@ -184,6 +217,16 @@ export default function DashboardViewer() {
               </button>
             </div>
           </div>
+        </div>
+        <div className="refresh-meta mono">
+          <span>
+            auto-refresh a cada {dashboard.config?.refreshInterval || 30}s
+          </span>
+          {lastUpdated && (
+            <span>
+              • atualizado às {lastUpdated.toLocaleTimeString('pt-BR')}
+            </span>
+          )}
         </div>
         {timeRange === 'custom' && (
           <div className="toolbar" style={{ marginTop: 12 }}>
