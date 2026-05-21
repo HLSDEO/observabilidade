@@ -792,6 +792,23 @@ tr:last-child td {
   gap: 8px;
 }
 
+/* ---------------- Card editor ---------------- */
+.card-edit {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.card-edit-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
 /* ---------------- Home: features & steps ---------------- */
 .feature {
   display: flex;

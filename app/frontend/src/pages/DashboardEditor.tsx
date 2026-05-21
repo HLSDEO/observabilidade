@@ -178,6 +178,12 @@ export default function DashboardEditor() {
                 >
                   Abrir
                 </button>
+                <button
+                  className="button secondary"
+                  onClick={() => navigate(`/dashboard/${dashboard.id}/edit`)}
+                >
+                  Editar
+                </button>
                 <button className="button danger" onClick={() => handleDeleteDashboard(dashboard.id)}>
                   Deletar
                 </button>

@@ -8,6 +8,7 @@ import {
 } from 'react-router-dom';
 import DashboardEditor from './pages/DashboardEditor';
 import DashboardViewer from './pages/DashboardViewer';
+import DashboardEdit from './pages/DashboardEdit';
 import Home from './pages/Home';
 import './App.css';
 
@@ -23,6 +24,7 @@ const DATA_SOURCES: [string, string][] = [
 ];
 
 function topbarTitle(pathname: string): string {
+  if (pathname.endsWith('/edit')) return 'Editar dashboard';
   if (pathname.startsWith('/dashboard/')) return 'Visualizar dashboard';
   if (pathname.startsWith('/dashboards')) return 'Dashboards';
   return 'Visão geral';
@@ -102,6 +104,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/dashboards" element={<DashboardEditor />} />
           <Route path="/dashboard/:id" element={<DashboardViewer />} />
+          <Route path="/dashboard/:id/edit" element={<DashboardEdit />} />
         </Routes>
       </Shell>
     </Router>

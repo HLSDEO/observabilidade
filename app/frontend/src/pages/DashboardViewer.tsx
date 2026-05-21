@@ -177,6 +177,12 @@ export default function DashboardViewer() {
                 ↻ Atualizar
               </button>
             </div>
+            <div className="field">
+              <label>&nbsp;</label>
+              <button className="button" onClick={() => navigate(`/dashboard/${id}/edit`)}>
+                Editar
+              </button>
+            </div>
           </div>
         </div>
         {timeRange === 'custom' && (
