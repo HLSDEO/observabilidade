@@ -1,24 +1,39 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import DashboardEditor from './pages/DashboardEditor';
+import DashboardViewer from './pages/DashboardViewer';
+import Home from './pages/Home';
+import './App.css';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <h1 className="text-4xl font-bold text-blue-600 mb-4">
-        📊 Observabilidade - Em Desenvolvimento
-      </h1>
-      <p className="text-gray-700 text-lg mb-4">
-        Aplicação FastAPI + React para Dashboard de Logs
-      </p>
-      <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Status</h2>
-        <ul className="space-y-2 text-gray-700">
-          <li>✓ Backend rodando em http://localhost:8000</li>
-          <li>✓ Frontend rodando em http://localhost:3000</li>
-          <li>✓ PostgreSQL rodando em localhost:5432</li>
-          <li>→ Documentação: http://localhost:8000/docs</li>
-        </ul>
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <nav className="bg-white shadow">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <div className="flex justify-between items-center">
+              <Link to="/" className="text-2xl font-bold text-blue-600">
+                📊 Observabilidade
+              </Link>
+              <div className="space-x-4">
+                <Link to="/" className="text-gray-700 hover:text-blue-600">
+                  Início
+                </Link>
+                <Link to="/dashboards" className="text-gray-700 hover:text-blue-600">
+                  Dashboards
+                </Link>
+              </div>
+            </div>
+          </div>
+        </nav>
+
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/dashboards" element={<DashboardEditor />} />
+          <Route path="/dashboard/:id" element={<DashboardViewer />} />
+        </Routes>
       </div>
-    </div>
+    </Router>
   );
 }
 

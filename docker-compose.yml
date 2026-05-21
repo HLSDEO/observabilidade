@@ -45,12 +45,8 @@ services:
       - "3000:3000"
     depends_on:
       - backend
-    volumes:
-      - ./app/frontend:/app
-      - /app/node_modules
     environment:
       REACT_APP_API_URL: http://backend:8000/api
-    command: npm start
 
 volumes:
   postgres_data:
