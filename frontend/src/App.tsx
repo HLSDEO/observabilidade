@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import DashboardEditor from './pages/DashboardEditor';
 import DashboardViewer from './pages/DashboardViewer';
+import DockerManager from './pages/DockerManager';
 import './styles/index.css';
 
 function App() {
@@ -22,6 +23,12 @@ function App() {
                 >
                   Meus Dashboards
                 </Link>
+                <Link
+                  to="/docker"
+                  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium"
+                >
+                  🐳 Docker Manager
+                </Link>
               </div>
             </div>
           </nav>
@@ -32,6 +39,7 @@ function App() {
           <Routes>
             <Route path="/" element={<DashboardEditor />} />
             <Route path="/dashboard/:id" element={<DashboardViewer />} />
+            <Route path="/docker" element={<DockerManager />} />
           </Routes>
         </main>
       </div>

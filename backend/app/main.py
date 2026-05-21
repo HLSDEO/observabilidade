@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base
-from app.routes import logs, dashboards, queries
+from app.routes import logs, dashboards, queries, docker_manager
 
 # Criar tabelas
 Base.metadata.create_all(bind=engine)
@@ -22,6 +22,7 @@ app.add_middleware(
 app.include_router(logs.router, prefix="/api", tags=["logs"])
 app.include_router(dashboards.router, prefix="/api", tags=["dashboards"])
 app.include_router(queries.router, prefix="/api", tags=["queries"])
+app.include_router(docker_manager.router, prefix="/api", tags=["docker"])
 
 @app.get("/health")
 def health_check():
