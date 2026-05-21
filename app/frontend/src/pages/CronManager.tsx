@@ -8,6 +8,9 @@ interface CronJob {
   user: string;
   command: string;
   enabled: boolean;
+  source: string;
+  source_label: string;
+  read_only: boolean;
 }
 
 const PRESETS: { label: string; value: string }[] = [
@@ -27,6 +30,9 @@ const EMPTY: Omit<CronJob, 'id'> = {
   user: 'root',
   command: '',
   enabled: true,
+  source: 'managed',
+  source_label: '/etc/cron.d/observabilidade',
+  read_only: false,
 };
 
 export default function CronManager() {
@@ -69,6 +75,9 @@ export default function CronManager() {
       user: job.user,
       command: job.command,
       enabled: job.enabled,
+      source: job.source,
+      source_label: job.source_label,
+      read_only: job.read_only,
     });
     setShowForm(true);
   };
@@ -76,10 +85,18 @@ export default function CronManager() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const payload = {
+        name: form.name,
+        schedule: form.schedule,
+        user: form.user,
+        command: form.command,
+        enabled: form.enabled,
+      };
+
       if (editingId) {
-        await cronService.update(editingId, form);
+        await cronService.update(editingId, payload);
       } else {
-        await cronService.create(form);
+        await cronService.create(payload);
       }
       setShowForm(false);
       setEditingId(null);
@@ -121,8 +138,9 @@ export default function CronManager() {
             <div className="page-label">Agendamento</div>
             <div className="page-title">Cron da VM</div>
             <div className="page-subtitle">
-              Gerencie os jobs agendados do host Ubuntu (arquivo /etc/cron.d/observabilidade).
-              As alterações são aplicadas automaticamente pelo cron do sistema.
+              Gerencie os jobs do arquivo /etc/cron.d/observabilidade e, quando o backend
+              estiver configurado com o spool do host, visualize também entradas criadas via
+              crontab -e em modo somente leitura.
             </div>
           </div>
           <button className="button" onClick={openNew}>
@@ -173,7 +191,7 @@ export default function CronManager() {
                     e.target.value && setForm({ ...form, schedule: e.target.value })
                   }
                 >
-                  <option value="">Escolher preset…</option>
+                  <option value="">Escolher preset...</option>
                   {PRESETS.map((p) => (
                     <option key={p.value} value={p.value}>
                       {p.label} ({p.value})
@@ -236,6 +254,7 @@ export default function CronManager() {
                   <th>Nome</th>
                   <th>Agendamento</th>
                   <th>Usuário</th>
+                  <th>Origem</th>
                   <th>Comando</th>
                   <th>Ações</th>
                 </tr>
@@ -253,21 +272,26 @@ export default function CronManager() {
                       {job.schedule}
                     </td>
                     <td className="muted">{job.user}</td>
+                    <td className="muted">{job.source_label}</td>
                     <td className="mono" style={{ fontSize: 12, maxWidth: 360 }}>
                       {job.command}
                     </td>
                     <td>
-                      <div className="button-row">
-                        <button className="button subtle" onClick={() => toggle(job)}>
-                          {job.enabled ? 'Pausar' : 'Ativar'}
-                        </button>
-                        <button className="button subtle" onClick={() => openEdit(job)}>
-                          Editar
-                        </button>
-                        <button className="button danger" onClick={() => remove(job)}>
-                          Remover
-                        </button>
-                      </div>
+                      {job.read_only ? (
+                        <span className="muted">Somente leitura</span>
+                      ) : (
+                        <div className="button-row">
+                          <button className="button subtle" onClick={() => toggle(job)}>
+                            {job.enabled ? 'Pausar' : 'Ativar'}
+                          </button>
+                          <button className="button subtle" onClick={() => openEdit(job)}>
+                            Editar
+                          </button>
+                          <button className="button danger" onClick={() => remove(job)}>
+                            Remover
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

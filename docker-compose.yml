@@ -28,6 +28,8 @@ services:
       APP_NAME: "Observabilidade Logs"
       DEBUG: "true"
       CRON_FILE: /host-cron.d/observabilidade
+      CRONTAB_SPOOL_DIR: /host-crontabs
+      CRONTAB_USERS: ${HOST_CRONTAB_USERS:-}
     ports:
       - "8000:8000"
     depends_on:
@@ -38,6 +40,10 @@ services:
       # Cron do host: na VM Ubuntu defina CRON_DIR=/etc/cron.d (ver .env).
       # Localmente usa ./data/cron.d para não tocar no cron real da máquina.
       - ${CRON_DIR:-./data/cron.d}:/host-cron.d
+      # Crontabs criados via `crontab -e`: na VM Ubuntu aponte para /var/spool/cron/crontabs.
+      - ${HOST_CRONTAB_DIR:-./data/crontabs}:/host-crontabs:ro
+      # Socket do Docker: permite ao backend gerenciar containers (Docker Manager).
+      - /var/run/docker.sock:/var/run/docker.sock
     command: >
       sh -c "pip install --no-cache-dir -r requirements.txt &&
              python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"

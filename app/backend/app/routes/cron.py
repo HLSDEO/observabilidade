@@ -1,4 +1,4 @@
-"""Gerencia jobs de cron do host via arquivo em /etc/cron.d (bind-mount)."""
+"""Gerencia jobs de cron do host via /etc/cron.d e leitura opcional de crontabs de usuários."""
 import os
 import re
 import uuid
@@ -41,6 +41,9 @@ class CronJobIn(BaseModel):
 
 class CronJob(CronJobIn):
     id: str
+    source: str = "managed"
+    source_label: str = "/etc/cron.d/observabilidade"
+    read_only: bool = False
 
 
 def _validate(job: CronJobIn) -> None:
@@ -86,7 +89,20 @@ def _parse_content_line(content: str):
     return " ".join(parts[:5]), parts[5], parts[6]
 
 
-def _read_jobs() -> List[CronJob]:
+def _parse_user_crontab_line(content: str):
+    """Divide linha de crontab de usuário em (schedule, command)."""
+    if content.startswith("@"):
+        parts = content.split(None, 1)
+        schedule = parts[0]
+        command = parts[1] if len(parts) > 1 else ""
+        return schedule, command
+    parts = content.split(None, 5)
+    if len(parts) < 6:
+        return None
+    return " ".join(parts[:5]), parts[5]
+
+
+def _read_managed_jobs() -> List[CronJob]:
     path = settings.cron_file
     if not os.path.exists(path):
         return []
@@ -118,10 +134,75 @@ def _read_jobs() -> List[CronJob]:
                     user=user,
                     command=command,
                     enabled=enabled,
+                    source="managed",
+                    source_label="/etc/cron.d/observabilidade",
+                    read_only=False,
                 )
             )
         pending = None
     return jobs
+
+
+def _read_user_crontab_jobs() -> List[CronJob]:
+    users = [user.strip() for user in settings.crontab_users.split(",") if user.strip()]
+    if not users:
+        return []
+
+    base_dir = settings.crontab_spool_dir
+    if not os.path.isdir(base_dir):
+        return []
+
+    jobs: List[CronJob] = []
+    for user in users:
+        path = os.path.join(base_dir, user)
+        if not os.path.exists(path):
+            continue
+
+        with open(path, "r", encoding="utf-8") as f:
+            lines = f.read().splitlines()
+
+        pending_name = None
+        visible_idx = 0
+        for line_no, line in enumerate(lines, start=1):
+            stripped = line.strip()
+            if not stripped:
+                pending_name = None
+                continue
+            if stripped.startswith("#"):
+                comment = stripped[1:].strip()
+                pending_name = comment or None
+                continue
+            if "=" in stripped and not stripped.startswith("@") and len(stripped.split()) == 1:
+                pending_name = None
+                continue
+
+            parsed = _parse_user_crontab_line(stripped)
+            if not parsed:
+                pending_name = None
+                continue
+
+            schedule, command = parsed
+            visible_idx += 1
+            jobs.append(
+                CronJob(
+                    id=f"usercrontab-{user}-{line_no}",
+                    name=pending_name or f"Crontab {user} #{visible_idx}",
+                    schedule=schedule,
+                    user=user,
+                    command=command,
+                    enabled=True,
+                    source="user-crontab",
+                    source_label=f"crontab -e ({user})",
+                    read_only=True,
+                )
+            )
+            pending_name = None
+
+    return jobs
+
+
+def _read_jobs() -> List[CronJob]:
+    return _read_managed_jobs() + _read_user_crontab_jobs()
 
 
 def _write_jobs(jobs: List[CronJob]) -> None:
@@ -164,7 +245,7 @@ def list_jobs():
 @router.post("", response_model=CronJob)
 def create_job(job: CronJobIn):
     _validate(job)
-    jobs = _read_jobs()
+    jobs = _read_managed_jobs()
     new_job = CronJob(id=uuid.uuid4().hex[:8], **job.model_dump())
     jobs.append(new_job)
     _write_jobs(jobs)
@@ -174,7 +255,7 @@ def create_job(job: CronJobIn):
 @router.put("/{job_id}", response_model=CronJob)
 def update_job(job_id: str, job: CronJobIn):
     _validate(job)
-    jobs = _read_jobs()
+    jobs = _read_managed_jobs()
     updated = None
     for idx, existing in enumerate(jobs):
         if existing.id == job_id:
@@ -189,7 +270,7 @@ def update_job(job_id: str, job: CronJobIn):
 
 @router.post("/{job_id}/toggle", response_model=CronJob)
 def toggle_job(job_id: str):
-    jobs = _read_jobs()
+    jobs = _read_managed_jobs()
     toggled = None
     for existing in jobs:
         if existing.id == job_id:
@@ -204,7 +285,7 @@ def toggle_job(job_id: str):
 
 @router.delete("/{job_id}")
 def delete_job(job_id: str):
-    jobs = _read_jobs()
+    jobs = _read_managed_jobs()
     remaining = [j for j in jobs if j.id != job_id]
     if len(remaining) == len(jobs):
         raise HTTPException(404, "Job não encontrado")
