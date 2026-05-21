@@ -25,6 +25,11 @@ const DATA_SOURCES: [string, string][] = [
   ['api', 'FastAPI'],
 ];
 
+// Host atual do navegador (ex.: 192.168.2.27 ou localhost), usado para montar
+// os links do backend dinamicamente — funciona acessando de qualquer máquina.
+const HOST = window.location.hostname;
+const API_BASE = `${window.location.protocol}//${HOST}:8000`;
+
 function topbarTitle(pathname: string): string {
   if (pathname.endsWith('/edit')) return 'Editar dashboard';
   if (pathname.startsWith('/dashboard/')) return 'Visualizar dashboard';
@@ -74,9 +79,9 @@ function Shell({ children }: { children: React.ReactNode }) {
           </section>
         </nav>
         <div className="sidebar-footer">
-          <div>frontend: localhost:3000</div>
-          <div>api: localhost:8000</div>
-          <div>postgres: localhost:5432</div>
+          <div>frontend: {HOST}:3000</div>
+          <div>api: {HOST}:8000</div>
+          <div>postgres: {HOST}:5432</div>
         </div>
       </aside>
       <main className="main">
@@ -85,7 +90,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <div className="topbar-actions">
             <a
               className="topbar-link"
-              href="http://localhost:8000/docs"
+              href={`${API_BASE}/docs`}
               target="_blank"
               rel="noreferrer"
             >
