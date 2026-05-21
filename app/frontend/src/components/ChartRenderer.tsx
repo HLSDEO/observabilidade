@@ -22,40 +22,58 @@ interface Props {
   onDataPointClick: (value: any) => void;
 }
 
-// Cores vibrantes similar ao Grafana
+// Paleta alinhada ao design system
 const COLORS = [
-  '#00B050', // Verde
-  '#FF0000', // Vermelho
-  '#0070C0', // Azul
-  '#FFC000', // Amarelo/Ouro
-  '#92278F', // Roxo
-  '#00B0F0', // Cyan
-  '#FF6B6B', // Vermelho claro
-  '#4ECDC4', // Teal
-  '#45B7D1', // Azul claro
-  '#FFA07A', // Salmão
+  '#00e5ff', // accent (cyan)
+  '#ff6b35', // accent2 (orange)
+  '#00ff94', // green
+  '#ffd60a', // yellow
+  '#b48ead', // purple
+  '#4c82f7', // blue
+  '#ff3860', // red
+  '#2dd4bf', // teal
+  '#f472b6', // pink
+  '#a3e635', // lime
 ];
+
+const AXIS_COLOR = '#7b8797';
+const GRID_COLOR = '#1f2730';
+
+const tooltipStyle = {
+  background: '#12171d',
+  border: '1px solid #2a3540',
+  borderRadius: 6,
+  color: '#e2e8f0',
+  fontSize: 12,
+};
 
 export default function ChartRenderer({ type, data, config, onDataPointClick }: Props) {
   if (!data || data.length === 0) {
-    return <div className="text-gray-500 text-center py-8">Sem dados para exibir</div>;
+    return <div className="empty-state">Sem dados para exibir</div>;
   }
 
-  const handleClick = (value: any) => {
-    onDataPointClick(value);
-  };
+  const handleClick = (value: any) => onDataPointClick(value);
+  const xKey = config.axes?.x?.key || Object.keys(data[0])[0];
+  const yKey = config.axes?.y?.key || Object.keys(data[0])[1];
 
   switch (type) {
     case 'line':
       return (
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={config.axes?.x?.key || Object.keys(data[0])[0]} />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey={config.axes?.y?.key || Object.keys(data[0])[1]} stroke="#0088FE" />
+          <LineChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} />
+            <XAxis dataKey={xKey} stroke={AXIS_COLOR} tick={{ fontSize: 11 }} />
+            <YAxis stroke={AXIS_COLOR} tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ stroke: '#2a3540' }} />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
+            <Line
+              type="monotone"
+              dataKey={yKey}
+              stroke={COLORS[0]}
+              strokeWidth={2}
+              dot={{ r: 3, fill: COLORS[0] }}
+              activeDot={{ r: 5 }}
+            />
           </LineChart>
         </ResponsiveContainer>
       );
@@ -63,17 +81,21 @@ export default function ChartRenderer({ type, data, config, onDataPointClick }: 
     case 'bar':
       return (
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={config.axes?.x?.key || Object.keys(data[0])[0]} />
-            <YAxis />
-            <Tooltip />
-            <Legend />
+          <BarChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
+            <XAxis dataKey={xKey} stroke={AXIS_COLOR} tick={{ fontSize: 11 }} />
+            <YAxis stroke={AXIS_COLOR} tick={{ fontSize: 11 }} />
+            <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(0,229,255,0.06)' }} />
             <Bar
-              dataKey={config.axes?.y?.key || Object.keys(data[0])[1]}
-              fill="#0088FE"
+              dataKey={yKey}
+              radius={[4, 4, 0, 0]}
               onClick={handleClick}
-            />
+              cursor="pointer"
+            >
+              {data.map((_, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       );
@@ -84,72 +106,82 @@ export default function ChartRenderer({ type, data, config, onDataPointClick }: 
           <PieChart>
             <Pie
               data={data}
-              dataKey={config.axes?.y?.key || Object.keys(data[0])[1]}
-              nameKey={config.axes?.x?.key || Object.keys(data[0])[0]}
+              dataKey={yKey}
+              nameKey={xKey}
               cx="50%"
               cy="50%"
-              outerRadius={80}
-              label
-              onClick={(entry) => handleClick(entry.payload)}
+              outerRadius={90}
+              innerRadius={45}
+              paddingAngle={2}
+              stroke="#0a0c0f"
+              label={{ fill: '#e2e8f0', fontSize: 11 }}
+              onClick={(entry: any) => handleClick(entry.payload)}
+              cursor="pointer"
             >
-              {data.map((entry, index) => (
+              {data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
           </PieChart>
         </ResponsiveContainer>
       );
 
-    case 'gauge':
+    case 'gauge': {
       const gaugeValue = typeof data === 'number' ? data : data[0]?.count || 0;
       const max = config.max || 1000;
-      const percentage = (gaugeValue / max) * 100;
+      const percentage = Math.min((gaugeValue / max) * 100, 100);
+      const arc = (percentage / 100) * 126; // semicircle length approx
+      const color =
+        percentage < 50 ? '#00ff94' : percentage < 80 ? '#ffd60a' : '#ff3860';
       return (
-        <div className="text-center">
-          <div className="relative w-40 h-40 mx-auto">
-            <svg viewBox="0 0 100 60" className="w-full">
-              <path
-                d="M 10 50 A 40 40 0 0 1 90 50"
-                fill="none"
-                stroke="#e5e7eb"
-                strokeWidth="5"
-              />
-              <path
-                d="M 10 50 A 40 40 0 0 1 90 50"
-                fill="none"
-                stroke={percentage < 50 ? '#22c55e' : percentage < 80 ? '#eab308' : '#ef4444'}
-                strokeWidth="5"
-                strokeDasharray={`${(percentage / 100) * 251.2} 251.2`}
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-3xl font-bold">{gaugeValue}</span>
-            </div>
+        <div className="gauge-wrap">
+          <svg viewBox="0 0 100 55" width="200">
+            <path
+              d="M 8 50 A 42 42 0 0 1 92 50"
+              fill="none"
+              stroke="#1f2730"
+              strokeWidth="8"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 8 50 A 42 42 0 0 1 92 50"
+              fill="none"
+              stroke={color}
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={`${arc} 200`}
+            />
+          </svg>
+          <div className="gauge-value">{gaugeValue.toLocaleString('pt-BR')}</div>
+          <div className="muted mono" style={{ fontSize: 11, marginTop: 6 }}>
+            máx {max.toLocaleString('pt-BR')}
           </div>
         </div>
       );
+    }
 
     case 'table':
       return (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300">
-            <thead className="bg-gray-100">
+        <div className="table-wrap">
+          <table>
+            <thead>
               <tr>
                 {Object.keys(data[0] || {}).map((key) => (
-                  <th key={key} className="border border-gray-300 px-4 py-2 text-left">
-                    {key}
-                  </th>
+                  <th key={key}>{key}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {data.map((row, idx) => (
-                <tr key={idx} className="hover:bg-gray-50 cursor-pointer" onClick={() => handleClick(row)}>
-                  {Object.values(row).map((value: any, idx) => (
-                    <td key={idx} className="border border-gray-300 px-4 py-2">
-                      {String(value)}
-                    </td>
+                <tr
+                  key={idx}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => handleClick(row)}
+                >
+                  {Object.values(row).map((value: any, i) => (
+                    <td key={i}>{String(value)}</td>
                   ))}
                 </tr>
               ))}
@@ -159,6 +191,6 @@ export default function ChartRenderer({ type, data, config, onDataPointClick }: 
       );
 
     default:
-      return <div className="text-gray-500">Tipo de gráfico não suportado: {type}</div>;
+      return <div className="empty-state">Tipo de gráfico não suportado: {type}</div>;
   }
 }

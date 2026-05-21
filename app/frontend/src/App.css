@@ -7,56 +7,56 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/DM-Sans-400.ttf") format("truetype");
+  src: url("./fonts/DM-Sans-400.ttf") format("truetype");
 }
 @font-face {
   font-family: "DM Sans";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/fonts/DM-Sans-500.ttf") format("truetype");
+  src: url("./fonts/DM-Sans-500.ttf") format("truetype");
 }
 @font-face {
   font-family: "DM Sans";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("/fonts/DM-Sans-700.ttf") format("truetype");
+  src: url("./fonts/DM-Sans-700.ttf") format("truetype");
 }
 @font-face {
   font-family: "Space Mono";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/SpaceMono-400.ttf") format("truetype");
+  src: url("./fonts/SpaceMono-400.ttf") format("truetype");
 }
 @font-face {
   font-family: "Space Mono";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("/fonts/SpaceMono-700.ttf") format("truetype");
+  src: url("./fonts/SpaceMono-700.ttf") format("truetype");
 }
 @font-face {
   font-family: "Syne";
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/Syne-400.ttf") format("truetype");
+  src: url("./fonts/Syne-400.ttf") format("truetype");
 }
 @font-face {
   font-family: "Syne";
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url("/fonts/Syne-700.ttf") format("truetype");
+  src: url("./fonts/Syne-700.ttf") format("truetype");
 }
 @font-face {
   font-family: "Syne";
   font-style: normal;
   font-weight: 800;
   font-display: swap;
-  src: url("/fonts/Syne-800.ttf") format("truetype");
+  src: url("./fonts/Syne-800.ttf") format("truetype");
 }
 
 :root {
