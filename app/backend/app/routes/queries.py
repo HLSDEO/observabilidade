@@ -201,7 +201,7 @@ def details_query(query_data: DetailsQuery, db: Session = Depends(get_db)):
 @router.get("/metrics")
 def get_metrics(db: Session = Depends(get_db)):
     return {
-        "numericFields": [],
+        "numericFields": ["duration"],
         "stringFields": [
             "source",
             "type",
