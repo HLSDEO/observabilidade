@@ -25,6 +25,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/observabilidade_logs
       APP_NAME: "Observabilidade Logs"
       DEBUG: "true"
+      CRON_FILE: /host-cron.d/observabilidade
     ports:
       - "8000:8000"
     depends_on:
@@ -32,6 +33,9 @@ services:
         condition: service_healthy
     volumes:
       - ./app/backend:/app
+      # Cron do host: na VM Ubuntu defina CRON_DIR=/etc/cron.d (ver .env).
+      # Localmente usa ./data/cron.d para não tocar no cron real da máquina.
+      - ${CRON_DIR:-./data/cron.d}:/host-cron.d
     command: >
       sh -c "pip install --no-cache-dir -r requirements.txt &&
              python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"

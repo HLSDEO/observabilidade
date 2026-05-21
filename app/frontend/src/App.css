@@ -811,6 +811,22 @@ tr:last-child td {
   }
 }
 
+/* ---------------- Checkbox row ---------------- */
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
 /* ---------------- Refresh meta ---------------- */
 .refresh-meta {
   display: flex;

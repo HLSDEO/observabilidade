@@ -28,4 +28,12 @@ export const queryService = {
   metrics: () => api.get('/queries/metrics'),
 };
 
+export const cronService = {
+  list: () => api.get('/cron'),
+  create: (data: any) => api.post('/cron', data),
+  update: (id: string, data: any) => api.put(`/cron/${id}`, data),
+  toggle: (id: string) => api.post(`/cron/${id}/toggle`),
+  remove: (id: string) => api.delete(`/cron/${id}`),
+};
+
 export default api;

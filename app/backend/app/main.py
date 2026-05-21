@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import engine, Base, SessionLocal
-from app.routes import logs, dashboards, queries
+from app.routes import logs, dashboards, queries, cron
 from app.seed import seed_default_dashboard
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(logs.router)
 app.include_router(dashboards.router)
 app.include_router(queries.router)
+app.include_router(cron.router)
 
 
 @app.get("/health")

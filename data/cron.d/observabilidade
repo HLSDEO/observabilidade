@@ -1,0 +1,6 @@
+# Gerenciado pela aplicacao Observabilidade - nao edite manualmente
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# job:34306351 name:Coleta contratos manha
+30 7 * * 1-5 root /opt/robo/run.sh
