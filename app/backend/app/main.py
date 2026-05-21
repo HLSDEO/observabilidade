@@ -1,13 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.database import engine, Base
+from app.database import engine, Base, SessionLocal
 from app.routes import logs, dashboards, queries
+from app.seed import seed_default_dashboard
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
+
+# Seed do dashboard padrão (idempotente)
+with SessionLocal() as _db:
+    seed_default_dashboard(_db)
 
 # CORS
 app.add_middleware(

@@ -167,9 +167,12 @@ export default function DashboardViewer() {
 
   const kpiValue = (cardId: string) => {
     const data = cardData[cardId];
-    if (!data || !data[0]) return 0;
+    if (!data || !data[0]) return '0';
     const v = data[0].count ?? data[0].sum ?? data[0].avg ?? 0;
-    return typeof v === 'number' ? v.toLocaleString('pt-BR') : v;
+    if (typeof v !== 'number') return v;
+    return Number.isInteger(v)
+      ? v.toLocaleString('pt-BR')
+      : v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   };
 
   return (
@@ -259,7 +262,7 @@ export default function DashboardViewer() {
       )}
 
       {gaugeCards.length > 0 && (
-        <div className="grid-4">
+        <div className="kpi-grid">
           {gaugeCards.map((card: any, idx: number) => (
             <div key={card.id} className={`stat-card ${KPI_TONES[idx % KPI_TONES.length]}`}>
               <div className="stat-label">{card.title}</div>

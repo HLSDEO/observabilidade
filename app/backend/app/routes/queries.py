@@ -28,6 +28,13 @@ class DetailsQuery(BaseModel):
     limit: int = 100
 
 
+def agg_target(field: Optional[str]):
+    """Resolve a coluna alvo da agregação. 'duration' = (end_time - start_time) em segundos."""
+    if field == "duration":
+        return func.extract("epoch", Log.end_time - Log.start_time)
+    return getattr(Log, field, Log.id)
+
+
 def build_where_clause(query, filters: Optional[Dict[str, Any]], source: str, fr: Optional[datetime], to: Optional[datetime]):
     conditions = [Log.source == source]
 
@@ -114,7 +121,7 @@ def aggregate_query(query_data: AggregationQuery, db: Session = Depends(get_db))
     elif query_data.aggregation == "sum":
         if not query_data.field:
             return {"error": "field required for sum aggregation"}
-        agg_expr = func.sum(getattr(Log, query_data.field, Log.id))
+        agg_expr = func.sum(agg_target(query_data.field))
         if group_by_fields:
             query = query.with_entities(*group_by_fields, agg_expr.label("sum"))
             query = query.group_by(*group_by_fields)
@@ -139,7 +146,7 @@ def aggregate_query(query_data: AggregationQuery, db: Session = Depends(get_db))
     elif query_data.aggregation == "avg":
         if not query_data.field:
             return {"error": "field required for avg aggregation"}
-        agg_expr = func.avg(getattr(Log, query_data.field, Log.id))
+        agg_expr = func.avg(agg_target(query_data.field))
         if group_by_fields:
             query = query.with_entities(*group_by_fields, agg_expr.label("avg"))
             query = query.group_by(*group_by_fields)
