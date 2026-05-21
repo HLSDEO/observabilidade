@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { dashboardService } from '../services/api';
 
 export default function DashboardEditor() {
+  const navigate = useNavigate();
   const [dashboards, setDashboards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -12,8 +13,8 @@ export default function DashboardEditor() {
     description: '',
     config: {
       refreshInterval: 30,
-      cards: []
-    }
+      cards: [],
+    },
   });
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export default function DashboardEditor() {
       const response = await dashboardService.list();
       setDashboards(response.data);
       setError(null);
-    } catch (err: any) {
+    } catch (err) {
       setError('Erro ao carregar dashboards');
       console.error(err);
     } finally {
@@ -39,14 +40,10 @@ export default function DashboardEditor() {
     try {
       const response = await dashboardService.create(formData);
       setDashboards([...dashboards, response.data]);
-      setFormData({
-        name: '',
-        description: '',
-        config: { refreshInterval: 30, cards: [] }
-      });
+      setFormData({ name: '', description: '', config: { refreshInterval: 30, cards: [] } });
       setShowForm(false);
       setError(null);
-    } catch (err: any) {
+    } catch (err) {
       setError('Erro ao criar dashboard');
       console.error(err);
     }
@@ -56,9 +53,9 @@ export default function DashboardEditor() {
     if (window.confirm('Tem certeza que deseja deletar este dashboard?')) {
       try {
         await dashboardService.delete(id);
-        setDashboards(dashboards.filter(d => d.id !== id));
+        setDashboards(dashboards.filter((d) => d.id !== id));
         setError(null);
-      } catch (err: any) {
+      } catch (err) {
         setError('Erro ao deletar dashboard');
         console.error(err);
       }
@@ -66,70 +63,65 @@ export default function DashboardEditor() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-900">Dashboards</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          + Novo Dashboard
-        </button>
+    <div>
+      <div className="page-header">
+        <div className="page-header-row">
+          <div>
+            <div className="page-label">Gerenciamento</div>
+            <div className="page-title">Dashboards</div>
+            <div className="page-subtitle">
+              Crie, visualize e gerencie seus painéis de observabilidade.
+            </div>
+          </div>
+          <button className="button" onClick={() => setShowForm(!showForm)}>
+            + Novo dashboard
+          </button>
+        </div>
       </div>
 
-      {error && <div className="error">{error}</div>}
+      {error && <div className="error-state">{error}</div>}
 
       {showForm && (
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h2 className="text-2xl font-bold mb-4">Criar Novo Dashboard</h2>
-          <form onSubmit={handleCreateDashboard}>
-            <div className="mb-4">
-              <label className="block text-gray-700 font-bold mb-2">Nome</label>
+        <div className="card section-gap">
+          <div className="card-title">Criar novo dashboard</div>
+          <form onSubmit={handleCreateDashboard} className="stack">
+            <div className="field">
+              <label>Nome *</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                placeholder="Ex: Robô Contratos - Monitoramento"
                 required
               />
             </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 font-bold mb-2">Descrição</label>
+            <div className="field">
+              <label>Descrição</label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-                rows={3}
+                placeholder="Descreva o propósito deste dashboard"
               />
             </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 font-bold mb-2">Intervalo de Refresh (segundos)</label>
+            <div className="field" style={{ maxWidth: 280 }}>
+              <label>Intervalo de refresh (segundos)</label>
               <input
                 type="number"
                 value={formData.config.refreshInterval}
-                onChange={(e) => setFormData({
-                  ...formData,
-                  config: { ...formData.config, refreshInterval: parseInt(e.target.value) }
-                })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    config: { ...formData.config, refreshInterval: parseInt(e.target.value) },
+                  })
+                }
                 min="10"
               />
             </div>
-
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                Criar Dashboard
+            <div className="button-row">
+              <button type="submit" className="button">
+                Criar dashboard
               </button>
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-                className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-              >
+              <button type="button" className="button secondary" onClick={() => setShowForm(false)}>
                 Cancelar
               </button>
             </div>
@@ -138,30 +130,55 @@ export default function DashboardEditor() {
       )}
 
       {loading ? (
-        <div className="loading">Carregando dashboards...</div>
+        <div className="loading-state">
+          <div className="spinner" />
+          <div style={{ marginTop: 12 }}>Carregando dashboards...</div>
+        </div>
       ) : dashboards.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-gray-700 text-center">Nenhum dashboard criado ainda.</p>
+        <div className="card section-gap">
+          <div className="empty-state">
+            <div style={{ fontSize: 32, marginBottom: 12 }}>▦</div>
+            <div>Nenhum dashboard criado ainda.</div>
+            <div className="button-row" style={{ justifyContent: 'center', marginTop: 16 }}>
+              <button className="button" onClick={() => setShowForm(true)}>
+                Criar primeiro dashboard
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid-3 section-gap">
           {dashboards.map((dashboard) => (
-            <div key={dashboard.id} className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">{dashboard.name}</h3>
+            <div
+              key={dashboard.id}
+              className="card card-clickable"
+              onClick={() => navigate(`/dashboard/${dashboard.id}`)}
+            >
+              <div className="card-title" style={{ color: 'var(--text)', textTransform: 'none', fontSize: 16 }}>
+                {dashboard.name}
+              </div>
               {dashboard.description && (
-                <p className="text-gray-700 mb-4 text-sm">{dashboard.description}</p>
+                <div className="muted" style={{ fontSize: 13, marginBottom: 14, minHeight: 38 }}>
+                  {dashboard.description}
+                </div>
               )}
-              <div className="flex gap-2">
-                <Link
-                  to={`/dashboard/${dashboard.id}`}
-                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-center"
+              <div className="pill-row" style={{ marginBottom: 16 }}>
+                <span className="badge info">
+                  {dashboard.config?.cards?.length || 0} cards
+                </span>
+                <span className="badge">
+                  ↻ {dashboard.config?.refreshInterval || 30}s
+                </span>
+              </div>
+              <div className="button-row" onClick={(e) => e.stopPropagation()}>
+                <button
+                  className="button"
+                  style={{ flex: 1 }}
+                  onClick={() => navigate(`/dashboard/${dashboard.id}`)}
                 >
                   Abrir
-                </Link>
-                <button
-                  onClick={() => handleDeleteDashboard(dashboard.id)}
-                  className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-                >
+                </button>
+                <button className="button danger" onClick={() => handleDeleteDashboard(dashboard.id)}>
                   Deletar
                 </button>
               </div>

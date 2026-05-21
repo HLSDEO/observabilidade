@@ -22,7 +22,19 @@ interface Props {
   onDataPointClick: (value: any) => void;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82ca9d', '#ffc658'];
+// Cores vibrantes similar ao Grafana
+const COLORS = [
+  '#00B050', // Verde
+  '#FF0000', // Vermelho
+  '#0070C0', // Azul
+  '#FFC000', // Amarelo/Ouro
+  '#92278F', // Roxo
+  '#00B0F0', // Cyan
+  '#FF6B6B', // Vermelho claro
+  '#4ECDC4', // Teal
+  '#45B7D1', // Azul claro
+  '#FFA07A', // Salmão
+];
 
 export default function ChartRenderer({ type, data, config, onDataPointClick }: Props) {
   if (!data || data.length === 0) {
