@@ -1,8 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+from app.database import engine, Base
+from app.routes import logs, dashboards, queries
 
 app = FastAPI(title=settings.app_name, debug=settings.debug)
+
+# Create tables
+Base.metadata.create_all(bind=engine)
 
 # CORS
 app.add_middleware(
@@ -13,23 +18,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register routes
+app.include_router(logs.router)
+app.include_router(dashboards.router)
+app.include_router(queries.router)
+
+
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
+
 @app.get("/")
 def read_root():
     return {"message": f"Welcome to {settings.app_name}"}
-
-# Placeholder endpoints
-@app.post("/api/logs")
-def create_log(data: dict):
-    return {"id": "test", **data}
-
-@app.get("/api/dashboards")
-def list_dashboards():
-    return []
-
-@app.post("/api/queries/aggregate")
-def aggregate(data: dict):
-    return {"aggregation": "placeholder"}
