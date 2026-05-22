@@ -7,6 +7,8 @@ O import é resiliente: se a lib `docker` não estiver instalada, o backend
 continua subindo (dashboards/cron seguem funcionando) e apenas as rotas
 /docker retornam 503.
 """
+import socket
+
 from fastapi import APIRouter, HTTPException
 
 try:
@@ -25,6 +27,23 @@ except Exception:  # pragma: no cover
 router = APIRouter(prefix="/api/docker", tags=["docker"])
 
 COMPOSE_LABEL = "com.docker.compose.project"
+
+# O hostname do container == seu ID no Docker. Usado para identificar o próprio
+# backend e nunca pará-lo/reiniciá-lo em ações em massa (evita auto-derrubada).
+_OWN_ID = socket.gethostname()
+
+
+def _is_self(container) -> bool:
+    return container.id.startswith(_OWN_ID) or container.short_id == _OWN_ID
+
+
+def _own_project(client) -> str:
+    """Nome do projeto compose do próprio backend (ex.: 'observabilidade')."""
+    try:
+        c = client.containers.get(_OWN_ID)
+        return (c.labels or {}).get(COMPOSE_LABEL, "")
+    except Exception:
+        return ""
 
 
 def get_client():
@@ -84,6 +103,7 @@ def _serialize(container) -> dict:
         "ports": _format_ports(container),
         "project": labels.get(COMPOSE_LABEL, ""),
         "service": labels.get("com.docker.compose.service", ""),
+        "self": _is_self(container),
     }
 
 
@@ -117,8 +137,21 @@ def get_compose_services():
         return {"services": [], "error": str(e)}
 
 
-def _project_containers(client):
-    return client.containers.list(all=True, filters={"label": COMPOSE_LABEL})
+def _project_containers(client, exclude_self: bool = False):
+    """Containers do projeto compose do próprio backend.
+
+    Escopado ao projeto do backend (ex.: 'observabilidade') para que as ações
+    em massa NUNCA afetem outros stacks do host (robo-contratos, obras, etc.).
+    """
+    project = _own_project(client)
+    if project:
+        label = f"{COMPOSE_LABEL}={project}"
+    else:
+        label = COMPOSE_LABEL
+    items = client.containers.list(all=True, filters={"label": label})
+    if exclude_self:
+        items = [c for c in items if not _is_self(c)]
+    return items
 
 
 @router.post("/compose/up")
@@ -144,7 +177,7 @@ def compose_down():
     client = get_client()
     try:
         stopped = []
-        for c in _project_containers(client):
+        for c in _project_containers(client, exclude_self=True):
             if c.status == "running":
                 c.stop()
                 stopped.append(c.name)
@@ -161,7 +194,7 @@ def compose_restart():
     client = get_client()
     try:
         restarted = []
-        for c in _project_containers(client):
+        for c in _project_containers(client, exclude_self=True):
             c.restart()
             restarted.append(c.name)
         return {"message": "Serviços reiniciados", "restarted": restarted}

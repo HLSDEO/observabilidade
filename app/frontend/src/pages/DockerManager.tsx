@@ -10,6 +10,7 @@ interface Container {
   ports: string;
   project: string;
   service: string;
+  self: boolean;
 }
 
 function stateBadge(state: string): string {
@@ -81,6 +82,13 @@ export default function DockerManager() {
   };
 
   const composeAction = async (action: 'up' | 'down' | 'restart') => {
+    if (action !== 'up') {
+      const txt =
+        action === 'down'
+          ? 'Parar TODOS os serviços do projeto observabilidade (exceto este backend)?'
+          : 'Reiniciar TODOS os serviços do projeto observabilidade (exceto este backend)?';
+      if (!window.confirm(txt)) return;
+    }
     setBusy(true);
     try {
       await dockerService.composeAction(action);
@@ -214,7 +222,9 @@ export default function DockerManager() {
                         <button className="button subtle" onClick={() => openLogs(c)}>
                           Logs
                         </button>
-                        {c.state === 'running' ? (
+                        {c.self ? (
+                          <span className="badge info">este backend</span>
+                        ) : c.state === 'running' ? (
                           <>
                             <button
                               className="button subtle"
