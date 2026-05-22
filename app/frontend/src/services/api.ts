@@ -40,4 +40,14 @@ export const cronService = {
   remove: (id: string) => api.delete(`/cron/${id}`),
 };
 
+export const dockerService = {
+  listContainers: () => api.get('/docker/containers'),
+  getContainerLogs: (id: string, tail = 200) =>
+    api.get(`/docker/container/${id}/logs`, { params: { tail } }),
+  containerAction: (id: string, action: 'start' | 'stop' | 'restart') =>
+    api.post(`/docker/container/${id}/${action}`),
+  composeAction: (action: 'up' | 'down' | 'restart') =>
+    api.post(`/docker/compose/${action}`),
+};
+
 export default api;

@@ -10,6 +10,7 @@ import DashboardEditor from './pages/DashboardEditor';
 import DashboardViewer from './pages/DashboardViewer';
 import DashboardEdit from './pages/DashboardEdit';
 import CronManager from './pages/CronManager';
+import DockerManager from './pages/DockerManager';
 import Home from './pages/Home';
 import './App.css';
 
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Visão geral', icon: '◎', end: true },
   { to: '/dashboards', label: 'Dashboards', icon: '▦', end: false },
   { to: '/cron', label: 'Cron', icon: '⏱', end: false },
+  { to: '/docker', label: 'Docker', icon: '⬡', end: false },
 ];
 
 const DATA_SOURCES: [string, string][] = [
@@ -35,6 +37,7 @@ function topbarTitle(pathname: string): string {
   if (pathname.startsWith('/dashboard/')) return 'Visualizar dashboard';
   if (pathname.startsWith('/dashboards')) return 'Dashboards';
   if (pathname.startsWith('/cron')) return 'Cron da VM';
+  if (pathname.startsWith('/docker')) return 'Docker Manager';
   return 'Visão geral';
 }
 
@@ -114,6 +117,7 @@ function App() {
           <Route path="/dashboard/:id" element={<DashboardViewer />} />
           <Route path="/dashboard/:id/edit" element={<DashboardEdit />} />
           <Route path="/cron" element={<CronManager />} />
+          <Route path="/docker" element={<DockerManager />} />
         </Routes>
       </Shell>
     </Router>
