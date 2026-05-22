@@ -11,6 +11,7 @@ interface EditCard {
   field: string;
   groupBy: string;
   filterType: string;
+  filterIdentifier: string;
   max: string;
   xLabel: string;
   yLabel: string;
@@ -58,6 +59,7 @@ function toEditCard(card: any): EditCard {
     field: card.query?.field || '',
     groupBy: card.query?.groupBy?.[0] || '',
     filterType: card.query?.filters?.type || '',
+    filterIdentifier: card.query?.filters?.identifier || '',
     max: card.max != null ? String(card.max) : '1000',
     xLabel: card.axes?.x?.label || '',
     yLabel: card.axes?.y?.label || '',
@@ -68,7 +70,11 @@ function toApiCard(ec: EditCard): any {
   const query: any = { source: ec.source, aggregation: ec.aggregation };
   if (ec.field && ec.aggregation !== 'count') query.field = ec.field;
   if (ec.groupBy) query.groupBy = [ec.groupBy];
-  if (ec.filterType) query.filters = { type: ec.filterType };
+
+  const filters: any = {};
+  if (ec.filterType) filters.type = ec.filterType;
+  if (ec.filterIdentifier.trim()) filters.identifier = ec.filterIdentifier.trim();
+  if (Object.keys(filters).length) query.filters = filters;
 
   const card: any = { id: ec.id, title: ec.title, type: ec.type, query };
 
@@ -95,6 +101,7 @@ function newCard(): EditCard {
     field: '',
     groupBy: 'type',
     filterType: '',
+    filterIdentifier: '',
     max: '1000',
     xLabel: '',
     yLabel: '',
@@ -349,6 +356,15 @@ export default function DashboardEdit() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="field">
+                    <label>Filtrar por identificador (opcional)</label>
+                    <input
+                      value={card.filterIdentifier}
+                      placeholder="ex: CONTRATO-123"
+                      onChange={(e) => updateCard(index, { filterIdentifier: e.target.value })}
+                    />
                   </div>
 
                   {card.type === 'gauge' && (
