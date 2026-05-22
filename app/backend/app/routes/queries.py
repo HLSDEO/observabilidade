@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from app.database import get_db
@@ -35,6 +35,43 @@ def agg_target(field: Optional[str]):
     return getattr(Log, field, Log.id)
 
 
+def string_filter_condition(column, value):
+    """Constrói condição de filtro para colunas de texto (ex: identifier).
+
+    Suporta:
+      - lista (JSON) -> casa com qualquer um dos valores
+      - string separada por vírgula -> casa com qualquer um dos valores
+      - curinga '*' -> traduzido para LIKE ('API-APEX-*' -> 'API-APEX-%')
+      - valor simples -> comparação exata
+    """
+    if isinstance(value, list):
+        terms = value
+    elif isinstance(value, str):
+        terms = [t.strip() for t in value.split(",") if t.strip()]
+    else:
+        terms = [value]
+
+    clauses = []
+    for term in terms:
+        if isinstance(term, str) and "*" in term:
+            # Escapa curingas de LIKE já existentes, depois converte '*' -> '%'
+            pattern = (
+                term.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_")
+                .replace("*", "%")
+            )
+            clauses.append(column.like(pattern, escape="\\"))
+        else:
+            clauses.append(column == term)
+
+    if not clauses:
+        return None
+    if len(clauses) == 1:
+        return clauses[0]
+    return or_(*clauses)
+
+
 def build_where_clause(query, filters: Optional[Dict[str, Any]], source: str, fr: Optional[datetime], to: Optional[datetime]):
     conditions = [Log.source == source]
 
@@ -51,15 +88,13 @@ def build_where_clause(query, filters: Optional[Dict[str, Any]], source: str, fr
                 else:
                     conditions.append(Log.type == value)
             elif field == "identifier_2":
-                if isinstance(value, list):
-                    conditions.append(Log.identifier_2.in_(value))
-                else:
-                    conditions.append(Log.identifier_2 == value)
+                cond = string_filter_condition(Log.identifier_2, value)
+                if cond is not None:
+                    conditions.append(cond)
             elif field == "identifier":
-                if isinstance(value, list):
-                    conditions.append(Log.identifier.in_(value))
-                else:
-                    conditions.append(Log.identifier == value)
+                cond = string_filter_condition(Log.identifier, value)
+                if cond is not None:
+                    conditions.append(cond)
             elif field == "environment":
                 if isinstance(value, list):
                     conditions.append(Log.environment.in_(value))

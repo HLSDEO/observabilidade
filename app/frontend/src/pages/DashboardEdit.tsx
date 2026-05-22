@@ -362,7 +362,7 @@ export default function DashboardEdit() {
                     <label>Filtrar por identificador (opcional)</label>
                     <input
                       value={card.filterIdentifier}
-                      placeholder="ex: CONTRATO-123"
+                      placeholder="ex: API-APEX-*  (use * como curinga ou separe por vírgula)"
                       onChange={(e) => updateCard(index, { filterIdentifier: e.target.value })}
                     />
                   </div>
