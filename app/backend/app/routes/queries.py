@@ -1,12 +1,14 @@
-from fastapi import APIRouter, Depends
+import logging
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_, or_
+from sqlalchemy import func, and_, or_, exc as sql_exc
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from app.database import get_db
 from app.models.log import Log
 from pydantic import BaseModel
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/queries", tags=["queries"])
 
 
@@ -113,139 +115,171 @@ def build_where_clause(query, filters: Optional[Dict[str, Any]], source: str, fr
 
 @router.post("/aggregate")
 def aggregate_query(query_data: AggregationQuery, db: Session = Depends(get_db)):
-    query = db.query(Log)
-    query = build_where_clause(query, query_data.filters, query_data.source, query_data.fr, query_data.to)
+    try:
+        logger.debug(
+            f"Aggregate query: source={query_data.source}, aggregation={query_data.aggregation}, groupBy={query_data.groupBy}"
+        )
+        query = db.query(Log)
+        query = build_where_clause(query, query_data.filters, query_data.source, query_data.fr, query_data.to)
 
-    group_by_fields = []
-    if query_data.groupBy:
-        for field in query_data.groupBy:
-            if field == "type":
-                group_by_fields.append(Log.type)
-            elif field == "identifier":
-                group_by_fields.append(Log.identifier)
-            elif field == "identifier_2":
-                group_by_fields.append(Log.identifier_2)
-            elif field == "environment":
-                group_by_fields.append(Log.environment)
-            elif field == "status_code":
-                group_by_fields.append(Log.status_code)
+        group_by_fields = []
+        if query_data.groupBy:
+            for field in query_data.groupBy:
+                if field == "type":
+                    group_by_fields.append(Log.type)
+                elif field == "identifier":
+                    group_by_fields.append(Log.identifier)
+                elif field == "identifier_2":
+                    group_by_fields.append(Log.identifier_2)
+                elif field == "environment":
+                    group_by_fields.append(Log.environment)
+                elif field == "status_code":
+                    group_by_fields.append(Log.status_code)
 
-    if query_data.aggregation == "count":
-        agg_expr = func.count(Log.id)
-        if group_by_fields:
-            query = query.with_entities(*group_by_fields, agg_expr.label("count"))
-            query = query.group_by(*group_by_fields)
-        else:
-            query = query.with_entities(agg_expr.label("count"))
+        if query_data.aggregation == "count":
+            agg_expr = func.count(Log.id)
+            if group_by_fields:
+                query = query.with_entities(*group_by_fields, agg_expr.label("count"))
+                query = query.group_by(*group_by_fields)
+            else:
+                query = query.with_entities(agg_expr.label("count"))
 
-        result = query.all()
-        if group_by_fields:
-            return [
-                {
-                    **{
-                        query_data.groupBy[i]: val
-                        for i, val in enumerate(row[:-1])
-                    },
-                    "count": row[-1],
-                }
-                for row in result
-            ]
-        else:
-            return [{"count": result[0][0]}] if result else [{"count": 0}]
+            result = query.all()
+            if group_by_fields:
+                return [
+                    {
+                        **{
+                            query_data.groupBy[i]: val
+                            for i, val in enumerate(row[:-1])
+                        },
+                        "count": row[-1],
+                    }
+                    for row in result
+                ]
+            else:
+                return [{"count": result[0][0]}] if result else [{"count": 0}]
 
-    elif query_data.aggregation == "sum":
-        if not query_data.field:
-            return {"error": "field required for sum aggregation"}
-        agg_expr = func.sum(agg_target(query_data.field))
-        if group_by_fields:
-            query = query.with_entities(*group_by_fields, agg_expr.label("sum"))
-            query = query.group_by(*group_by_fields)
-        else:
-            query = query.with_entities(agg_expr.label("sum"))
+        elif query_data.aggregation == "sum":
+            if not query_data.field:
+                return {"error": "field required for sum aggregation"}
+            agg_expr = func.sum(agg_target(query_data.field))
+            if group_by_fields:
+                query = query.with_entities(*group_by_fields, agg_expr.label("sum"))
+                query = query.group_by(*group_by_fields)
+            else:
+                query = query.with_entities(agg_expr.label("sum"))
 
-        result = query.all()
-        if group_by_fields:
-            return [
-                {
-                    **{
-                        query_data.groupBy[i]: val
-                        for i, val in enumerate(row[:-1])
-                    },
-                    "sum": row[-1],
-                }
-                for row in result
-            ]
-        else:
-            return [{"sum": result[0][0]}] if result else [{"sum": 0}]
+            result = query.all()
+            if group_by_fields:
+                return [
+                    {
+                        **{
+                            query_data.groupBy[i]: val
+                            for i, val in enumerate(row[:-1])
+                        },
+                        "sum": row[-1],
+                    }
+                    for row in result
+                ]
+            else:
+                return [{"sum": result[0][0]}] if result else [{"sum": 0}]
 
-    elif query_data.aggregation == "avg":
-        if not query_data.field:
-            return {"error": "field required for avg aggregation"}
-        agg_expr = func.avg(agg_target(query_data.field))
-        if group_by_fields:
-            query = query.with_entities(*group_by_fields, agg_expr.label("avg"))
-            query = query.group_by(*group_by_fields)
-        else:
-            query = query.with_entities(agg_expr.label("avg"))
+        elif query_data.aggregation == "avg":
+            if not query_data.field:
+                return {"error": "field required for avg aggregation"}
+            agg_expr = func.avg(agg_target(query_data.field))
+            if group_by_fields:
+                query = query.with_entities(*group_by_fields, agg_expr.label("avg"))
+                query = query.group_by(*group_by_fields)
+            else:
+                query = query.with_entities(agg_expr.label("avg"))
 
-        result = query.all()
-        if group_by_fields:
-            return [
-                {
-                    **{
-                        query_data.groupBy[i]: val
-                        for i, val in enumerate(row[:-1])
-                    },
-                    "avg": row[-1],
-                }
-                for row in result
-            ]
-        else:
-            return [{"avg": result[0][0]}] if result else [{"avg": 0}]
+            result = query.all()
+            if group_by_fields:
+                return [
+                    {
+                        **{
+                            query_data.groupBy[i]: val
+                            for i, val in enumerate(row[:-1])
+                        },
+                        "avg": row[-1],
+                    }
+                    for row in result
+                ]
+            else:
+                return [{"avg": result[0][0]}] if result else [{"avg": 0}]
 
-    return {"error": "Unknown aggregation"}
+        return {"error": "Unknown aggregation"}
+    except sql_exc.OperationalError as e:
+        logger.error(f"Database operational error during aggregate: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail="Database connection error")
+    except sql_exc.SQLAlchemyError as e:
+        logger.error(f"Database error during aggregate: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        logger.error(f"Unexpected error during aggregate: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Server error")
 
 
 @router.post("/details")
 def details_query(query_data: DetailsQuery, db: Session = Depends(get_db)):
-    query = db.query(Log)
-    query = build_where_clause(query, query_data.filters, query_data.source, query_data.fr, query_data.to)
+    try:
+        logger.debug(
+            f"Details query: source={query_data.source}, filters={query_data.filters}, limit={query_data.limit}"
+        )
+        query = db.query(Log)
+        query = build_where_clause(query, query_data.filters, query_data.source, query_data.fr, query_data.to)
 
-    logs = query.order_by(Log.start_time.desc()).limit(query_data.limit).all()
+        logs = query.order_by(Log.start_time.desc()).limit(query_data.limit).all()
+        logger.debug(f"Retrieved {len(logs)} logs")
 
-    return [
-        {
-            "id": str(log.id),
-            "start_time": log.start_time.isoformat(),
-            "end_time": log.end_time.isoformat(),
-            "source": log.source,
-            "type": log.type,
-            "identifier": log.identifier,
-            "data": log.data,
-            "location": log.location,
-            "environment": log.environment,
-            "status_code": log.status_code,
-            "identifier_2": log.identifier_2,
-            "identifier_3": log.identifier_3,
-            "created_at": log.created_at.isoformat(),
-        }
-        for log in logs
-    ]
+        return [
+            {
+                "id": str(log.id),
+                "start_time": log.start_time.isoformat(),
+                "end_time": log.end_time.isoformat(),
+                "source": log.source,
+                "type": log.type,
+                "identifier": log.identifier,
+                "data": log.data,
+                "location": log.location,
+                "environment": log.environment,
+                "status_code": log.status_code,
+                "identifier_2": log.identifier_2,
+                "identifier_3": log.identifier_3,
+                "created_at": log.created_at.isoformat(),
+            }
+            for log in logs
+        ]
+    except sql_exc.OperationalError as e:
+        logger.error(f"Database operational error during details: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail="Database connection error")
+    except sql_exc.SQLAlchemyError as e:
+        logger.error(f"Database error during details: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Database error")
+    except Exception as e:
+        logger.error(f"Unexpected error during details: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Server error")
 
 
 @router.get("/metrics")
 def get_metrics(db: Session = Depends(get_db)):
-    return {
-        "numericFields": ["duration"],
-        "stringFields": [
-            "source",
-            "type",
-            "identifier",
-            "location",
-            "environment",
-            "status_code",
-            "identifier_2",
-            "identifier_3",
-        ],
-        "aggregationFunctions": ["count", "sum", "avg", "min", "max", "distinct"],
-    }
+    try:
+        logger.debug("Metrics requested")
+        return {
+            "numericFields": ["duration"],
+            "stringFields": [
+                "source",
+                "type",
+                "identifier",
+                "location",
+                "environment",
+                "status_code",
+                "identifier_2",
+                "identifier_3",
+            ],
+            "aggregationFunctions": ["count", "sum", "avg", "min", "max", "distinct"],
+        }
+    except Exception as e:
+        logger.error(f"Error getting metrics: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to get metrics")
