@@ -24,6 +24,7 @@ const typeBadge = (type: string) => {
 
 export default function DetailModal({ isOpen, logs, cardTitle, onClose }: Props) {
   const [page, setPage] = useState(1);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const itemsPerPage = 50;
   const totalPages = Math.ceil(logs.length / itemsPerPage);
   const startIdx = (page - 1) * itemsPerPage;
@@ -31,9 +32,16 @@ export default function DetailModal({ isOpen, logs, cardTitle, onClose }: Props)
 
   if (!isOpen) return null;
 
-  const copyJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(paginatedLogs, null, 2));
-    alert('Logs copiados para a área de transferência!');
+  const copyJson = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(paginatedLogs, null, 2));
+      setCopyFeedback('✓ Copiado!');
+      setTimeout(() => setCopyFeedback(null), 2000);
+    } catch (err) {
+      console.error('Erro ao copiar:', err);
+      setCopyFeedback('Erro ao copiar');
+      setTimeout(() => setCopyFeedback(null), 2000);
+    }
   };
 
   return (
@@ -62,6 +70,8 @@ export default function DetailModal({ isOpen, logs, cardTitle, onClose }: Props)
                     <th>Hora</th>
                     <th>Tipo</th>
                     <th>Identificador</th>
+                    <th>Identificador 2</th>
+                    <th>Identificador 3</th>
                     <th>Dados</th>
                     <th>Ambiente</th>
                     <th>Status</th>
@@ -78,6 +88,12 @@ export default function DetailModal({ isOpen, logs, cardTitle, onClose }: Props)
                       </td>
                       <td className="mono" style={{ fontSize: 12 }}>
                         {log.identifier}
+                      </td>
+                      <td className="mono" style={{ fontSize: 12 }}>
+                        {log.identifier_2 || '-'}
+                      </td>
+                      <td className="mono" style={{ fontSize: 12 }}>
+                        {log.identifier_3 || '-'}
                       </td>
                       <td style={{ maxWidth: 320 }}>{log.data}</td>
                       <td className="muted">{log.environment}</td>
@@ -116,8 +132,11 @@ export default function DetailModal({ isOpen, logs, cardTitle, onClose }: Props)
                     </button>
                   </>
                 )}
-                <button className="button" onClick={copyJson}>
-                  Copiar JSON
+                <button
+                  className={`button ${copyFeedback ? 'success' : ''}`}
+                  onClick={copyJson}
+                >
+                  {copyFeedback || 'Copiar JSON'}
                 </button>
               </div>
             </div>
