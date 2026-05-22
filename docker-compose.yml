@@ -7,10 +7,13 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: observabilidade_logs
+      TZ: America/Sao_Paulo
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -30,6 +33,7 @@ services:
       CRON_FILE: /host-cron.d/observabilidade
       CRONTAB_SPOOL_DIR: /host-crontabs
       CRONTAB_USERS: ${HOST_CRONTAB_USERS:-}
+      TZ: America/Sao_Paulo
     ports:
       - "8000:8000"
     depends_on:
@@ -44,6 +48,9 @@ services:
       - ${HOST_CRONTAB_DIR:-./data/crontabs}:/host-crontabs:ro
       # Socket do Docker: permite ao backend gerenciar containers (Docker Manager).
       - /var/run/docker.sock:/var/run/docker.sock
+      # Timezone: sincroniza o horário do container com Brasília/São Paulo
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
     command: >
       sh -c "pip install --no-cache-dir -r requirements.txt &&
              python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
@@ -60,6 +67,10 @@ services:
       - backend
     environment:
       REACT_APP_API_URL: http://backend:8000/api
+      TZ: America/Sao_Paulo
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
 
 volumes:
   postgres_data:
