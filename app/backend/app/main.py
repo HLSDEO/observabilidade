@@ -13,6 +13,7 @@ from app.config import settings
 from app.database import engine, Base, SessionLocal
 from app.routes import logs, dashboards, queries, cron, docker_manager
 from app.seed import seed_default_dashboard
+from app.seed_pncp import seed_pncp_dashboard
 
 # Configure logging
 logging_config = {
@@ -69,6 +70,7 @@ def _init_db_with_retry() -> None:
             Base.metadata.create_all(bind=engine)
             with SessionLocal() as _db:
                 seed_default_dashboard(_db)
+                seed_pncp_dashboard(_db)
             logger.info("✓ Banco inicializado com sucesso")
             _db_healthy = True
             return
