@@ -7,24 +7,24 @@ DEFAULT_DASHBOARD_NAME = "Robô PNCP - Visão Geral"
 SOURCE = "robo-pncp"
 
 ETAPAS = [
-    "hierarquia_material",
-    "hierarquia_servico",
     "editais",
     "itens_resultados",
     "atas",
-    "contratos_pncp",
     "contratos_comprasnet",
     "arp",
+    "hierarquia_itens",
 ]
 
 APIS = [
-    "PNCP_SEARCH",
-    "PNCP_V1_ITENS",
-    "PNCP_V1_RESULTADOS",
-    "PNCP_V1_ATAS",
-    "PNCP_V1_CONTRATOS",
-    "COMPRASNET_CONTRATOS",
-    "COMPRASNET_SUBROTA",
+    "PNCP_EDITAIS",
+    "PNCP_ITENS",
+    "PNCP_DETALHE_ITEM",
+    "PNCP_ATAS",
+    "COMPRASNET_CONTRATOS_UG",
+    "COMPRASNET_CONTRATO_HISTORICO",
+    "COMPRASNET_CONTRATO_EMPENHOS",
+    "COMPRASNET_CONTRATO_ITENS",
+    "COMPRASNET_CONTRATO_FATURAS",
     "DADOSABERTOS_MATERIAL",
     "DADOSABERTOS_SERVICO",
     "DADOSABERTOS_ARP",
@@ -68,12 +68,40 @@ def _default_config() -> dict:
             },
             {
                 "id": "kpi-contratos",
-                "title": "Contratos coletados",
+                "title": "Contratos coletados (Comprasnet)",
                 "type": "gauge",
                 "query": {
                     "source": SOURCE,
                     "aggregation": "count",
                     "filters": {"type": "success", "identifier": "CONTRATO"},
+                },
+            },
+            {
+                "id": "kpi-contratos-com-edital",
+                "title": "Contratos com edital PNCP",
+                "type": "gauge",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {
+                        "type": "success",
+                        "identifier": "MATCH_EDITAL_PNCP",
+                        "identifier_2": "com",
+                    },
+                },
+            },
+            {
+                "id": "kpi-contratos-sem-edital",
+                "title": "Contratos sem edital PNCP",
+                "type": "gauge",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {
+                        "type": "success",
+                        "identifier": "MATCH_EDITAL_PNCP",
+                        "identifier_2": "sem",
+                    },
                 },
             },
             {
@@ -177,6 +205,37 @@ def _default_config() -> dict:
                 },
             },
             {
+                "id": "contratos-unidade",
+                "title": "Contratos (Comprasnet) por unidade da PF",
+                "type": "bar",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {"type": "success", "identifier": "CONTRATO"},
+                    "groupBy": ["identifier_2"],
+                },
+                "axes": {
+                    "x": {"label": "Unidade", "key": "identifier_2"},
+                    "y": {"label": "Contratos", "key": "count"},
+                },
+            },
+            {
+                "id": "ug-comprasnet-duracao",
+                "title": "Duração da coleta /contrato/ug por unidade (s)",
+                "type": "bar",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "avg",
+                    "field": "duration",
+                    "filters": {"type": "success", "identifier": "UG_COMPRASNET"},
+                    "groupBy": ["identifier_2"],
+                },
+                "axes": {
+                    "x": {"label": "Unidade", "key": "identifier_2"},
+                    "y": {"label": "Segundos", "key": "avg"},
+                },
+            },
+            {
                 "id": "erros-unidade",
                 "title": "Erros por unidade da PF",
                 "type": "bar",
@@ -207,19 +266,27 @@ def _default_config() -> dict:
 
 
 def seed_pncp_dashboard(db: Session) -> None:
-    """Cria o dashboard padrão do robo-pncp se ainda não existir."""
-    exists = (
+    """Cria ou atualiza o dashboard padrão do robo-pncp.
+
+    Se já existe, sobrescreve o `config` com a versão mais recente do seed -
+    isso garante que mudanças nos identificadores/cards (ex: renomes de tags
+    de API) entrem em vigor no próximo restart do backend, sem precisar
+    apagar o dashboard manualmente.
+    """
+    description = "Visão geral do robô de coleta PNCP (gerado automaticamente)."
+    config = _default_config()
+    existing = (
         db.query(Dashboard)
         .filter(Dashboard.name == DEFAULT_DASHBOARD_NAME)
         .first()
     )
-    if exists:
-        return
-
-    dashboard = Dashboard(
-        name=DEFAULT_DASHBOARD_NAME,
-        description="Visão geral do robô de coleta PNCP (gerado automaticamente).",
-        config=_default_config(),
-    )
-    db.add(dashboard)
+    if existing:
+        existing.description = description
+        existing.config = config
+    else:
+        db.add(Dashboard(
+            name=DEFAULT_DASHBOARD_NAME,
+            description=description,
+            config=config,
+        ))
     db.commit()
