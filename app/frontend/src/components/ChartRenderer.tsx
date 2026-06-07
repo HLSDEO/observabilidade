@@ -78,20 +78,24 @@ export default function ChartRenderer({ type, data, config, onDataPointClick }: 
         </ResponsiveContainer>
       );
 
-    case 'bar':
+    case 'bar': {
+      const handleBarChartClick = (state: any) => {
+        const payload = state?.activePayload?.[0]?.payload;
+        if (payload) handleClick(payload);
+      };
       return (
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: -8 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 8, right: 16, bottom: 4, left: -8 }}
+            onClick={handleBarChartClick}
+            style={{ cursor: 'pointer' }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke={GRID_COLOR} vertical={false} />
             <XAxis dataKey={xKey} stroke={AXIS_COLOR} tick={{ fontSize: 11 }} />
             <YAxis stroke={AXIS_COLOR} tick={{ fontSize: 11 }} />
             <Tooltip contentStyle={tooltipStyle} cursor={{ fill: 'rgba(0,229,255,0.06)' }} />
-            <Bar
-              dataKey={yKey}
-              radius={[4, 4, 0, 0]}
-              onClick={handleClick}
-              cursor="pointer"
-            >
+            <Bar dataKey={yKey} radius={[4, 4, 0, 0]}>
               {data.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
@@ -99,6 +103,7 @@ export default function ChartRenderer({ type, data, config, onDataPointClick }: 
           </BarChart>
         </ResponsiveContainer>
       );
+    }
 
     case 'pie':
       return (
