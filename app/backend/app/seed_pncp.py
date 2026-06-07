@@ -188,6 +188,65 @@ def _default_config() -> dict:
                     "y": {"label": "Falhas", "key": "count"},
                 },
             },
+            # ---------- Sub-rotas de contrato (historico, empenhos, itens, faturas) ----------
+            {
+                "id": "subrotas-contrato-sucesso",
+                "title": "Sub-rotas de contrato — requisições OK",
+                "type": "bar",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {
+                        "type": "success",
+                        "identifier": "API",
+                        "identifier_2": "COMPRASNET_CONTRATO_*",
+                    },
+                    "groupBy": ["identifier_2"],
+                },
+                "axes": {
+                    "x": {"label": "Sub-rota", "key": "identifier_2"},
+                    "y": {"label": "Requisições", "key": "count"},
+                },
+            },
+            {
+                "id": "subrotas-contrato-falha",
+                "title": "Sub-rotas de contrato — falhas após retries",
+                "type": "bar",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {
+                        "type": "error",
+                        "identifier": "API",
+                        "identifier_2": "COMPRASNET_CONTRATO_*",
+                    },
+                    "groupBy": ["identifier_2"],
+                },
+                "axes": {
+                    "x": {"label": "Sub-rota", "key": "identifier_2"},
+                    "y": {"label": "Falhas", "key": "count"},
+                },
+            },
+            {
+                "id": "subrotas-contrato-duracao",
+                "title": "Sub-rotas de contrato — duração média (s)",
+                "type": "bar",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "avg",
+                    "field": "duration",
+                    "filters": {
+                        "type": "success",
+                        "identifier": "API",
+                        "identifier_2": "COMPRASNET_CONTRATO_*",
+                    },
+                    "groupBy": ["identifier_2"],
+                },
+                "axes": {
+                    "x": {"label": "Sub-rota", "key": "identifier_2"},
+                    "y": {"label": "Segundos", "key": "avg"},
+                },
+            },
             # ---------- Por unidade ----------
             {
                 "id": "editais-unidade",
