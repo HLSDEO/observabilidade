@@ -12,6 +12,14 @@ API_IDENTIFIERS = [
     "API-APEX-FATURAS",
     "API-APEX-FISCAIS",
 ]
+# Falha ao listar os contratos "Ativo" de uma UG na API do comprasnet
+# (https://contratos.comprasnet.gov.br/api/contrato/ug/{UG}). Quando ocorre, a
+# unidade inteira é pulada, pois a coleta depende dessa lista de IDs.
+IDENTIFIER_LISTAGEM_UG = "API-COMPRASNET-UG"
+# Falha ao consultar o detalhe de um contrato na API do PNCP
+# (https://pncp.gov.br/api/pncp/v1/orgaos/{cnpj}/contratos/{ano}/{seq}). Quando ocorre,
+# o contrato segue sem os identificadores do PNCP (numeroControlePNCP/Compra/tipoPessoa).
+IDENTIFIER_PNCP = "API-PNCP"
 
 
 def _default_config() -> dict:
@@ -57,6 +65,26 @@ def _default_config() -> dict:
                     "source": SOURCE,
                     "aggregation": "count",
                     "filters": {"type": "error", "identifier": "UNIDADE"},
+                },
+            },
+            {
+                "id": "kpi-listagem-ug-falha",
+                "title": "UGs com falha na listagem (API)",
+                "type": "gauge",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {"type": "error", "identifier": IDENTIFIER_LISTAGEM_UG},
+                },
+            },
+            {
+                "id": "kpi-pncp-falha",
+                "title": "Falha na API do PNCP",
+                "type": "gauge",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {"type": "error", "identifier": IDENTIFIER_PNCP},
                 },
             },
             {
@@ -129,6 +157,21 @@ def _default_config() -> dict:
                 },
             },
             {
+                "id": "listagem-ug-falha-unidade",
+                "title": "Falha ao listar contratos da UG (API comprasnet)",
+                "type": "bar",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {"type": "error", "identifier": IDENTIFIER_LISTAGEM_UG},
+                    "groupBy": ["identifier_2"],
+                },
+                "axes": {
+                    "x": {"label": "Unidade", "key": "identifier_2"},
+                    "y": {"label": "Falhas", "key": "count"},
+                },
+            },
+            {
                 "id": "erros-unidade",
                 "title": "Total de erros por unidade",
                 "type": "bar",
@@ -148,19 +191,27 @@ def _default_config() -> dict:
 
 
 def seed_default_dashboard(db: Session) -> None:
-    """Cria o dashboard padrão se ainda não existir."""
-    exists = (
+    """Cria ou atualiza o dashboard padrão do robô de contratos.
+
+    Se já existe, sobrescreve o `config` com a versão mais recente do seed - assim
+    mudanças nos cards/identificadores (ex: o card de falha na listagem da UG)
+    entram em vigor no próximo restart do backend, sem precisar apagar o dashboard
+    manualmente.
+    """
+    description = "Visão geral do robô de coleta de contratos (gerado automaticamente)."
+    config = _default_config()
+    existing = (
         db.query(Dashboard)
         .filter(Dashboard.name == DEFAULT_DASHBOARD_NAME)
         .first()
     )
-    if exists:
-        return
-
-    dashboard = Dashboard(
-        name=DEFAULT_DASHBOARD_NAME,
-        description="Visão geral do robô de coleta de contratos (gerado automaticamente).",
-        config=_default_config(),
-    )
-    db.add(dashboard)
+    if existing:
+        existing.description = description
+        existing.config = config
+    else:
+        db.add(Dashboard(
+            name=DEFAULT_DASHBOARD_NAME,
+            description=description,
+            config=config,
+        ))
     db.commit()
