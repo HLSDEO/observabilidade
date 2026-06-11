@@ -172,6 +172,21 @@ def _default_config() -> dict:
                 },
             },
             {
+                "id": "pncp-falha-unidade",
+                "title": "Falha na API do PNCP por unidade",
+                "type": "bar",
+                "query": {
+                    "source": SOURCE,
+                    "aggregation": "count",
+                    "filters": {"type": "error", "identifier": IDENTIFIER_PNCP},
+                    "groupBy": ["identifier_2"],
+                },
+                "axes": {
+                    "x": {"label": "Unidade", "key": "identifier_2"},
+                    "y": {"label": "Falhas", "key": "count"},
+                },
+            },
+            {
                 "id": "erros-unidade",
                 "title": "Total de erros por unidade",
                 "type": "bar",
