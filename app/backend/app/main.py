@@ -14,6 +14,7 @@ from app.database import engine, Base, SessionLocal
 from app.routes import logs, dashboards, queries, cron, docker_manager
 from app.seed import seed_default_dashboard
 from app.seed_pncp import seed_pncp_dashboard
+from app.seed_viaturas import seed_viaturas_dashboard
 
 # Configure logging
 logging_config = {
@@ -71,6 +72,7 @@ def _init_db_with_retry() -> None:
             with SessionLocal() as _db:
                 seed_default_dashboard(_db)
                 seed_pncp_dashboard(_db)
+                seed_viaturas_dashboard(_db)
             logger.info("✓ Banco inicializado com sucesso")
             _db_healthy = True
             return
